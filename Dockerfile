@@ -30,13 +30,15 @@ COPY --from=composer_bin /usr/bin/composer /usr/bin/composer
 COPY composer.json composer.lock ./
 RUN composer install \
     --no-dev \
+    --no-scripts \
     --no-interaction \
     --no-progress \
     --prefer-dist \
     --optimize-autoloader
 
 COPY . .
-RUN composer dump-autoload --optimize --no-dev
+RUN composer dump-autoload --optimize --no-dev \
+    && php artisan package:discover --ansi
 
 FROM node:20-alpine AS assets
 
