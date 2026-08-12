@@ -28,6 +28,9 @@ use App\Http\Controllers\SupplyIssueController;
 use App\Http\Controllers\SupplyClientController;
 use App\Http\Controllers\SupplyPurchaseRecipientController;
 
+Route::redirect('/', '/login');
+Route::get('/favicon.ico', static fn () => response()->noContent());
+
 
 
 
