@@ -1,0 +1,79 @@
+/* Estilos para el cuerpo de la página */
+body {
+    background: linear-gradient(to bottom, #0f0e0e, #0f0e0e);
+    font-family: 'Nunito', sans-serif;
+    color: #f5f3f3;
+}
+
+/* Estilos para el contenedor principal */
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(38, 9, 227, 0.4);
+    text-align: center;
+}
+
+/* Estilos para el formulario de inicio de sesión */
+.card {
+    border: none;
+    background-color: rgba(64, 12, 235, 0.1);
+    border-radius: 15px;
+}
+
+/* Estilos para el encabezado del formulario */
+.card-header {
+    background-color: transparent;
+    color: #fff;
+    border-radius: 45px 45px 0 0;
+}
+
+/* Estilos para el formulario y sus elementos */
+.card-body {
+    padding: 3rem;
+}
+
+/* Ajustar el tamaño vertical de los campos de entrada */
+.form-control {
+    border-radius: 10px;
+    background-color: rgba(231, 192, 200, 0.1);
+    color: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+/* Estilos para los botones */
+.btn-primary {
+    background-color: #fffbfb;
+    border: none;
+    border-radius: 25px;
+    padding: 10px 50px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    color: #000;
+    cursor: pointer;
+}
+
+/* Cambios al pasar el cursor sobre el botón */
+.btn-primary:hover {
+    background-color: #ff2e63;
+    color: #fff;
+}
+
+.logo {
+    max-width: 600%;
+    height: auto;
+    margin-top: 20px;
+}
+body {
+    background-color: #f8f9fc;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 400px;
+  }

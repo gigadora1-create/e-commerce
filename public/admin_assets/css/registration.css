@@ -1,0 +1,164 @@
+input{
+    border: rgba(0, 0, 0, 0.5);
+    background-clip: padding-box;
+}
+.base {
+	margin: auto;
+	display: block;
+	box-sizing: content-box;
+	background-color: white;
+	text-align: center;
+	width: 900px;
+	height: 1201px;
+	border: solid;
+}
+.titulo{
+	border: 2px solid black;
+	border-left: hidden;
+	border-right: hidden;
+	border-top: hidden;
+	background-color: white;
+	text-align: center;
+	width: 900px;
+	height: 100px;
+}
+.containerimg{
+	border-right: 2px solid;
+	float: left;
+	background-color: white;
+	width: 200px;
+	height: 100px;
+}
+.container1{
+	display: flex;
+	float: right;
+	background-color: white;
+	align-items: center;
+	justify-content: center;
+	width: 200px;
+	height: 50px;
+	border-bottom: 2px solid;
+	border-left: 2px solid;
+}
+.container2{
+	position: relative;
+	left: 497px;
+	top: 52px;
+	display: flex;
+	background-color: white;
+	align-items: center;
+	justify-content: center;
+	width: 200px;
+	height: 48px;
+	border-left: 2px solid;
+}
+.container3{
+	background-color: #edeeef;
+	border-bottom: 2px solid;
+	display: block;
+	height: 19px;
+	width: 900px;
+	justify-content: center;
+	text-align: center;
+}
+table{
+	border-collapse: collapse;
+	border-bottom: 2px solid;
+}
+th{
+	width: 900px;
+}
+.registro{
+	color: white;
+	border-right: 2px solid black;
+	background-color: red;
+	font-size: 90%;	
+}
+.codigo{
+	color: white;
+	border-left: 2px solid black;
+	border-right: 2px solid black;
+	background-color: red;
+	font-size: 90%;
+}
+.fecha1{
+	color: white;
+	width: 160px;
+	border-left: 2px solid black;
+	border-right: 2px solid black;
+	background-color: red;
+	font-size: 90%;
+}
+.container4{
+	color: white;
+	height: 5px;
+	border-bottom: 2px solid black;
+	border-right: 2px solid black;
+	background-color: red;
+}
+.container5{
+	color: white;
+	border-bottom: 3px solid black;
+	background-color: red;
+}
+.container6{
+	text-align: left;
+	height: 60px;
+	border-right: 2px solid;
+}
+.container7{
+	text-align: left;
+	height: 60px;
+	border-right: 2px solid;
+
+}
+.container8{
+	color: white;
+	background-color: red;
+	border-bottom: 2px solid black;
+	display: block;
+	height: 19px;
+	width: 900px;
+	justify-content: center;
+	text-align: center;
+}
+.container9{
+	display: block;
+	height: 30px;
+	width: 900px;
+	justify-content: center;
+	text-align: center;
+}
+.container10{
+	color: white;
+	height: 5px;
+	width: 400px;
+	text-align: left;
+	border-bottom: 2px solid black;
+	border-right: 2px solid black;
+	background-color: red;
+}
+.container11{
+	color: white;
+	text-align: left;
+	border-bottom: 2px solid black;
+	background-color: red;
+}
+.container12{
+	text-align: left;
+	height: 60px;
+	border-right: 2px solid;
+	border-top: 2px solid;
+}
+.container13{
+	border-top: 2px solid;
+	text-align: left;
+}
+.container14{
+	border-bottom: 2px solid;
+	text-align: left;
+}
+.cerra{
+	height: 11px;
+	border-bottom: 2px solid;
+}

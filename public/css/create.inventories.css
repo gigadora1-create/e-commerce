@@ -1,0 +1,250 @@
+        .swal-wide {
+            width: 600px !important;
+        }
+        
+        .form-text.text-success {
+            color: #28a745 !important;
+        }
+        
+        .form-text.text-danger {
+            color: #dc3545 !important;
+        }
+        
+        /* Animación para el textarea */
+        #observations {
+            transition: height 0.2s ease;
+        }
+        
+        /* Indicadores visuales para campos requeridos */
+        .form-control[required] {
+            position: relative;
+        }
+        
+        .form-control[required]:invalid {
+            border-color: #dc3545;
+        }
+        
+        .form-control[required]:valid {
+            border-color: #28a745;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+        }
+
+        .card {
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            border-bottom: none;
+            padding: 2rem;
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            border-radius: 20px 20px 0 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        }
+
+        .card-header h3 {
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            font-size: 1.8rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-header small {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #2d3748;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-label i {
+            color: #dc3545;
+        }
+
+        .form-control, .form-select {
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            font-size: 1rem;
+            border: 2px solid #e2e8f0;
+            background: rgba(248, 250, 252, 0.8);
+            color: #2d3748;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(5px);
+        }
+
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: #dc3545;
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        /* Estilos especiales para los estados */
+        .form-control.border-warning, .form-select.border-warning {
+            border-color: #ffc107;
+        }
+
+        .form-control.border-warning:focus, .form-select.border-warning:focus {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 4px rgba(255, 193, 7, 0.1);
+        }
+
+        .form-control.border-info, .form-select.border-info {
+            border-color: #17a2b8;
+        }
+
+        .form-control.border-info:focus, .form-select.border-info:focus {
+            border-color: #17a2b8;
+            box-shadow: 0 0 0 4px rgba(23, 162, 184, 0.1);
+        }
+
+        .form-control.border-danger, .form-select.border-danger {
+            border-color: #dc3545;
+        }
+
+        .form-control.border-danger:focus, .form-select.border-danger:focus {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            background: rgba(248, 250, 252, 0.9);
+            border: 2px dashed #cbd5e0;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-style: solid;
+            border-color: #dc3545;
+            background: white;
+        }
+
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #dc3545;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: none;
+        }
+
+        .search-result-item {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .search-result-item:hover {
+            background: linear-gradient(90deg, #fef2f2, #fef7f7);
+            transform: translateX(4px);
+        }
+
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .search-result-item i {
+            color: #dc3545;
+            width: 16px;
+        }
+
+        .selected-item {
+            margin-top: 1rem;
+        }
+
+        .selected-item-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border: 2px solid #28a745;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .selected-item-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+        }
+
+        .selected-item-name, .selected-warehouse-name {
+            margin: 0;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .clear-selection, .clear-warehouse {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+    
+
+
+    

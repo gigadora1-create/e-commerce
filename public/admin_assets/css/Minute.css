@@ -1,0 +1,272 @@
+@page {
+    size: portrait;
+}
+
+body {
+    background-color: white;
+    font-family: arial;
+}
+input{
+    border: rgba(0, 0, 0, 0.5);
+    background-clip: padding-box;
+}
+
+.container1{
+    background-color: white;
+    text-align: center;
+    margin: 10px auto;
+    width: 900px;
+    height: 110px;
+    border: solid;
+}
+.container2{
+    background-color: #B6BEC3;
+    margin: 36px auto;
+    width: 898px;
+    height: 20px;
+    border: solid;
+}
+.containerimg{
+    float: left;
+    background-color: white;
+    text-align: center;
+    width: 200px;
+    height: 80px;
+    border: solid;
+}
+.container3{
+    background-color: white;
+    text-align: center;
+    font-size: 0.40vw;
+    width: 203px;
+    height: 39px;
+    border: solid;
+}
+.container4{
+    background-color: white;
+    text-align: center;
+    font-size: 0.45vw;
+    width: 203px;
+    height: 35px;
+    border: solid;
+}
+.container5{
+    float: right;
+    width: 205px;
+    height: 42px;
+}
+.table{
+    margin: 50px auto;
+    width: 700px;
+}
+.base{
+    display: block;
+    box-sizing: content-box;
+    background-color: white;
+    text-align: center;
+    margin: 10px auto;
+    width: 900px;
+    height: 500px;
+    border: solid;
+}
+.container7{
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    width: 250px;
+    height: 106px;
+    border: solid;
+}
+.container7 input[type="text"] {
+    text-align: center;
+}
+.container9{
+    margin-top: -112px;
+    margin-left: 270px;
+    position: relative;
+    background-color: white;
+    text-align: left;
+    width: 421px;
+    height: 25px;
+    border: solid;
+}
+.container11{
+    margin-top: -2px;
+    margin-left: 270px;
+    position: relative;
+    background-color: white;
+    text-align: left;
+    width: 421px;
+    height: 25px;
+    border: solid;
+}
+.container12{
+    margin-top: -3px;
+    margin-left: 270px;
+    position: relative;
+    background-color: white;
+    text-align: left;
+    width: 421px;
+    height: 25px;
+    border: solid;
+}
+.container13{
+    margin-top: -4px;
+    margin-left: 270px;
+    position: relative;
+    background-color: white;
+    text-align: left;
+    width: 421px;
+    height: 25px;
+    border: solid;
+}
+.container14{
+    margin-top: -5px;
+    margin-left: 270px;
+    position: relative;
+    background-color: white;
+    text-align: left;
+    width: 421px;
+    height: 25px;
+    border: solid;
+}
+.container17{
+    position: relative;
+    margin-top: -2.5px;
+    display: flex;
+    align-items: left;
+    justify-content: left;
+    text-align: left;
+    background-color: white;
+    width: 343px;
+    height: 26px;
+    border: solid;
+}
+.container19{
+    position: block;
+    text-align: left;
+    background-color: white;
+    width: 345px;
+    height: 26px;
+    border: solid;
+    margin-top: -31px;
+    margin-left: 346px;
+}
+.container21{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 343px;
+    height: 25px;
+    border: solid;
+    margin-top: -3px;
+}
+.container23{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 345px;
+    height: 25.5px;
+    border: solid;
+    margin-top: -30px;
+    margin-left: 346px;
+}
+.container25{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 691px;
+    height: 25px;
+    border: solid;
+    margin-top: -3px;
+}
+.container27{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 691px;
+    height: 25px;
+    border: solid;
+    margin-top: -3px;
+}
+.container28{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 691px;
+    height: 25px;
+    border: solid;
+    margin-top: -3px;
+}
+.container29{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 691px;
+    height: 25px;
+    border: solid;
+    margin-top: -3px;
+}
+.container30{
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    position: relative;
+    background-color: white;
+    width: 691px;
+    height: 30px;
+    border: solid;
+    margin-top: -3px;
+}
+.container33{
+    position: relative; 
+    text-align: center;
+    background-color: white;
+    width: 200px;
+    height: 50px;
+    margin-left: 700px;
+    margin-top: -300px;
+}
+.container34{
+    position: relative; 
+    text-align: center;
+    background-color: white;
+    width: 200px;
+    height: 50px;
+    margin-left: 697px;
+    margin-top: 97px;
+}
+.container35{
+    position: relative;
+    text-align: center;
+    background-color: white;
+    width: 200px;
+    height: 50px;
+    margin-left: 697px;
+}
+.container36{
+    position: relative;
+    text-align: center;
+    background-color: white;
+    width: 200px;
+    height: 50px;
+    margin-left: 697px;
+}
+.base_pie{
+    position: relative;
+    text-align: left;
+    background-color: white;
+    width: 898px;
+    height: 160px;
+    border: solid;
+    margin-top: 0px;
+}
+.logo {
+  display: block; /* Para convertir el elemento en un bloque */
+  width: 200px;
+  height: 70px;
+  margin-right: auto;
+}
+/* Agrega estos estilos al final de tu archivo CSS existente */

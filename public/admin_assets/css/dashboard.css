@@ -1,0 +1,150 @@
+        .container { background: linear-gradient(to bottom, #000, #FFFFFF);
+         padding: 20px; border-radius: 10px; }
+
+        .logo-image { width: 200px; height: auto; display: block; margin: 0 auto; }
+
+        .dashboard-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+
+        .boton-personalizado { border: 2px solid gray;
+         border-radius: 5px; 
+         padding: 10px 20px; 
+         color: white; 
+         background-color: #00008B; 
+         text-decoration: none; }
+         h1 { color: white; text-align: center; }   
+         .container { 
+background: linear-gradient(to bottom, #42424e, #FFFFFF);
+padding: 20px; border-radius: 10px; }
+.boton-personalizado {
+  padding: 8px 15px;
+  background-color: gray;
+  border: none;
+  border-radius: 25px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  text-decoration: none; /* Agregamos esta línea para quitar la decoración de enlace */
+  display: inline-block; /* Aseguramos que el botón tenga el ancho y alto correctos */
+}
+
+
+/* Cambiar el color de fondo cuando se pasa el mouse para botones de tipo submit */
+.boton-personalizado[type="submit"]:hover {
+  background-color: #000;
+}
+/* Cambiar el color de fondo cuando se pasa el mouse para botones de tipo submit */
+.boton-personalizado-rojo[type="submit"]:hover {
+  background-color: #e70c0c;
+}
+
+
+
+ .scroll-horizontal {
+ overflow-x: auto; /* Mostrar la barra de desplazamiento horizontal solo cuando sea necesario */
+ white-space: nowrap; /* Evitar el retorno de línea */
+}  
+form.search-form {
+  display: flex;
+  align-items: center;
+  background-color: gray;
+  border-radius: 25px;
+  padding: 5px;
+  
+}
+
+input[name="search"] {
+  padding: 8px 15px;
+  border: 2px solid rgb(244, 241, 241);
+  border-radius: 25px;
+  font-size: 14px;
+  width: 350px;
+  outline: none;
+  background-color: rgb(245, 243, 243);
+  color: white; /* Agregamos el color de letra negro */
+}
+/* Estilo general para los elementos input y button */
+input, button {
+    /* Altura de 30px */
+    height: 30px;
+    /* Ancho de 200px */
+    width: 200px;
+    /* Fuente Arial de tamaño 14px */
+    font-family: Arial;
+    font-size: 14px;
+  }
+  
+  /* Estilo para los elementos input */
+  input {
+    /* Color de fondo blanco */
+    background-color: white;
+    /* Borde gris de 1px */
+    border: 1px solid gray;
+  }
+  
+  /* Estilo para los elementos button */
+  button {
+    /* Color de fondo azul */
+    background-color: gray;
+    /* Color de texto blanco */
+    color: #fff;
+    /* Borde redondeado de 5px */
+    border-radius: 5px;
+  }
+  .center-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Ajusta la altura según tus necesidades */
+}
+
+   
+
+  /* Estilo para los elementos form */
+  form {
+    /* Display inline-block para ubicarlos uno al lado del otro */
+    display: inline-block;
+    /* Margen de 10px entre cada formulario */
+    margin: 10px;
+  }
+  /* Estilo para el botón general */
+.boton-personalizado {
+  background-color: GRAY; /* Color azul como ejemplo */
+  color: #fff; /* Texto en color blanco */
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.boton-personalizado1 {
+  background-color: GRAY; /* Color azul como ejemplo */
+  color: #fff; /* Texto en color blanco */
+  padding: 10px 15px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Efecto al pasar el cursor sobre cualquier botón */
+.boton-personalizado1:hover,
+.boton-personalizado-rojo:hover {
+  background-color: #e81212; /* Cambiar color al pasar el cursor */
+}
+
+
+/* Efecto al pasar el cursor sobre cualquier botón */
+.boton-personalizado:hover,
+.boton-personalizado-rojo:hover {
+  background-color: #e81212; /* Cambiar color al pasar el cursor */
+}
+form {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap; /* Permite que los elementos se envuelvan si no caben en una sola línea */
+}
+
+.boton-personalizado1 {
+  margin: 5px; /* Ajusta el espacio entre los botones según tus necesidades */
+  /* Otros estilos de tus botones */
+}

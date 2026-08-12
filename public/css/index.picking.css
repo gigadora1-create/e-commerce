@@ -1,0 +1,288 @@
+.thead-dark {
+    background-color: #343a40;
+    color: white;
+}
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.table th {
+    white-space: nowrap;
+    font-size: 0.9rem;
+}
+.table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+.table td,
+.table th {
+    padding: 12px 8px;
+}
+.empty-row td {
+    height: 50px;
+}
+/* Estado hover para filas */
+.table-hover tbody tr:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+    transition: background-color 0.2s ease;
+}
+.table tbody tr {
+    animation: fadeInRow 0.3s ease-in;
+}
+@keyframes fadeInRow {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.card {
+    border: none;
+    border-radius: 10px;
+}
+.badge {
+    font-size: 0.85em;
+    padding: 0.35em 0.65em;
+    margin: 2px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+.progress-container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+.progress-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.progress-header h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+.progress-status {
+    color: #7f8c8d;
+    font-size: 16px;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+.progress-details {
+    color: #95a5a6;
+    font-size: 14px;
+    min-height: 20px;
+}
+.progress {
+    height: 30px;
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: #ecf0f1;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.progress-bar {
+    font-size: 14px;
+    font-weight: bold;
+    line-height: 30px;
+    transition: width 0.4s ease;
+    background: linear-gradient(90deg, #3498db, #2980b9);
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+/* Progreso completado */
+.progress-bar[aria-valuenow="100"] {
+    background: linear-gradient(90deg, #27ae60, #229954);
+    animation: none;
+}
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+.spinner-container {
+    text-align: center;
+    margin-top: 20px;
+}
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #ecf0f1;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.warning-text {
+    color: #e74c3c;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 20px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+.btn-disabled {
+    opacity: 0.6;
+    cursor: not-allowed !important;
+    pointer-events: none;
+}
+.btn-sm {
+    margin: 2px;
+}
+/* Hover effects para botones de acción */
+.btn-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+/* Mejorar apariencia de la plantilla de descarga */
+.card-body .btn-outline-primary:hover {
+    background-color: #3498db;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    transition: all 0.3s ease;
+}
+.form-control:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+.invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+.form-control.is-invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+#importForm.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+.modal-content {
+    transition: opacity 0.3s ease;
+}
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+}
+.alert-info {
+    border-left: 4px solid #3498db;
+}
+.alert-info h6 {
+    color: #2c3e50;
+    font-weight: 600;
+}
+#pickingTable_wrapper .dataTables_length,
+#pickingTable_wrapper .dataTables_filter {
+    margin-bottom: 1rem;
+}
+#pickingTable_wrapper .dataTables_info,
+#pickingTable_wrapper .dataTables_paginate {
+    margin-top: 1rem;
+}
+pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+.swal2-html-container pre {
+    text-align: left;
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+.card-header i,
+.modal-title i {
+    margin-right: 8px;
+}
+@media (max-width: 768px) {
+    .progress-container {
+        width: 95%;
+        padding: 20px;
+    }
+
+    .progress-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .warning-text {
+        font-size: 12px;
+    }
+
+    .table th,
+    .table td {
+        font-size: 0.8rem;
+        padding: 8px 4px;
+    }
+
+    .badge {
+        font-size: 0.75em;
+    }
+}
+@media (max-width: 576px) {
+    .progress-container {
+        padding: 15px;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+body.loading {
+    overflow: hidden;
+}
+body.loading * {
+    cursor: wait !important;
+}

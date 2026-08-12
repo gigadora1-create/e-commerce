@@ -1,0 +1,556 @@
+.input-neon {
+    background-color: #2a2a2a;
+    border: 1px solid #00ff91;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.input-neon:focus {
+    box-shadow: 0 0 10px #059762;
+    outline: none;
+}
+
+.btn-neon {
+    position: relative;
+    display: inline-block;
+    padding: 10px 20px;
+    color: #26ff00;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    overflow: hidden;
+    transition: 0.5s;
+    letter-spacing: 4px;
+    background: transparent;
+    border: none;
+}
+
+.btn-neon:hover {
+    background: #00ff62;
+    color: #fff;
+    box-shadow: 0 0 5px #00ff51, 0 0 25px #09ff00, 0 0 50px #00ff6a,
+        0 0 100px #62ff00;
+}
+
+.btn-neon span {
+    position: absolute;
+    display: block;
+}
+
+.btn-neon span:nth-child(1) {
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #0dff00);
+    animation: btn-anim1 1s linear infinite;
+}
+
+@keyframes btn-anim1 {
+    0% {
+        left: -100%;
+    }
+    50%,
+    100% {
+        left: 100%;
+    }
+}
+
+.btn-neon span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, #00ff15);
+    animation: btn-anim2 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes btn-anim2 {
+    0% {
+        top: -100%;
+    }
+    50%,
+    100% {
+        top: 100%;
+    }
+}
+
+.btn-neon span:nth-child(3) {
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(270deg, transparent, #33ff00);
+    animation: btn-anim3 1s linear infinite;
+    animation-delay: 0.1s;
+}
+
+@keyframes btn-anim3 {
+    0% {
+        right: -100%;
+    }
+    50%,
+    100% {
+        right: 100%;
+    }
+}
+
+.btn-neon span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, #00ff2a);
+    animation: btn-anim4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+@keyframes btn-anim4 {
+    0% {
+        bottom: -100%;
+    }
+    50%,
+    100% {
+        bottom: 100%;
+    }
+}
+.input-neon {
+    background-color: #2a2a2a;
+    border: 1px solid #059762;
+    color: #ffffff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.input-neon:focus {
+    box-shadow: 0 0 10px #059762;
+    outline: none;
+}
+
+.btn-neon {
+    position: relative;
+    display: inline-block;
+    padding: 10px 20px;
+    color: #059762;
+    font-size: 14px;
+    text-decoration: none;
+    text-transform: uppercase;
+    overflow: hidden;
+    transition: 0.5s;
+    letter-spacing: 4px;
+    background: transparent;
+    border: none;
+}
+
+.btn-neon:hover {
+    background: #00ff11;
+    color: #fff;
+    box-shadow: 0 0 5px #00ff11, 0 0 25px #059762, 0 0 50px #059762,
+        0 0 100px #059762;
+}
+.btn-neon:hover {
+    background: #059762;
+    color: #fff;
+    box-shadow: 0 0 5px #059762, 0 0 25px #059762, 0 0 50px #059762,
+        0 0 100px #059762;
+}
+
+.btn-neon span {
+    position: absolute;
+    display: block;
+}
+
+.btn-neon span:nth-child(1) {
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00ff0d);
+    animation: btn-anim1 1s linear infinite;
+}
+
+@keyframes btn-anim1 {
+    0% {
+        left: -100%;
+    }
+    50%,
+    100% {
+        left: 100%;
+    }
+}
+
+.btn-neon span:nth-child(2) {
+    top: -100%;
+    right: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, #33ff00);
+    animation: btn-anim2 1s linear infinite;
+    animation-delay: 0.5s;
+}
+
+@keyframes btn-anim2 {
+    0% {
+        top: -100%;
+    }
+    50%,
+    100% {
+        top: 100%;
+    }
+}
+
+.btn-neon span:nth-child(3) {
+    bottom: 0;
+    right: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(270deg, transparent, #00ff04);
+    animation: btn-anim3 1s linear infinite;
+    animation-delay: 0.1s;
+}
+
+@keyframes btn-anim3 {
+    0% {
+        right: -100%;
+    }
+    50%,
+    100% {
+        right: 100%;
+    }
+}
+
+.btn-neon span:nth-child(4) {
+    bottom: -100%;
+    left: 0;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(360deg, transparent, #00ff3c);
+    animation: btn-anim4 1s linear infinite;
+    animation-delay: 0.75s;
+}
+
+@keyframes btn-anim4 {
+    0% {
+        bottom: -100%;
+    }
+    50%,
+    100% {
+        bottom: 100%;
+    }
+}
+/* Cambiar el color del placeholder a blanco */
+input[type="text"]::placeholder {
+    color: white;
+}
+.container1 {
+    background: linear-gradient(to bottom, #059762, #ffffff);
+    padding: 20px;
+    border-radius: 10px;
+}
+.boton-personalizado {
+    padding: 8px 15px;
+    background-color: #059762;
+    border: none;
+    border-radius: 25px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-decoration: none; /* Agregamos esta línea para quitar la decoración de enlace */
+    display: inline-block; /* Aseguramos que el botón tenga el ancho y alto correctos */
+}
+
+/* Cambiar el color de fondo cuando se pasa el mouse */
+.boton-personalizado:hover {
+    background-color: #151414; /* Cambiamos el color de fondo al pasar el mouse */
+}
+
+.scroll-horizontal {
+    overflow-x: auto; /* Mostrar la barra de desplazamiento horizontal solo cuando sea necesario */
+    white-space: nowrap; /* Evitar el retorno de línea */
+}
+form.search-form {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 25px;
+    padding: 5px;
+    color: white; /* Agregamos el color de letra negro */
+}
+
+input[name="search"] {
+    padding: 8px 15px;
+    border: 2px solid #fff;
+    border-radius: 25px;
+    font-size: 14px;
+    width: 350px;
+    outline: none;
+    background-color: #e0d2d2;
+    color: white; /* Agregamos el color de letra negro */
+}
+.center-title {
+    text-align: center;
+}
+
+.card {
+    background-color: #ffffff !important;
+    /* Fondo blanco */
+    border: 1px solid #000000 !important;
+    /* Borde negro */
+}
+
+.upload-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.upload-area:hover {
+    background-color: #f5f5f5;
+}
+
+.upload-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.upload-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.upload-text {
+    font-weight: bold;
+    margin-right: 1rem;
+}
+
+.upload-input {
+    opacity: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.upload-progress {
+    margin-top: 1rem;
+    width: 100%;
+    height: 4px;
+    background-color: #ccc;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #007bff;
+    transition: width 0.2s ease-in-out;
+}
+
+.upload-file-name {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.upload-area::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.upload-area:hover::before {
+    opacity: 0.5;
+}
+
+.upload-area.dropzone {
+    background-color: #f5f5f5;
+}
+
+.upload-area.dropzone::before {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.upload-area.dropzone .upload-button .upload-text {
+    animation: ripple-effect 0.5s ease-in-out infinite;
+}
+
+@keyframes ripple-effect {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.5);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.hidden-fields {
+    display: none;
+}
+
+.search-container {
+    background-color: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#searchModal .modal-content {
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+#searchModal .modal-header {
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+#searchModal .form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+#searchModal .form-select,
+#searchModal .form-control {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#searchModal .form-select:focus,
+#searchModal .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#searchModal .btn {
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+#searchModal .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+#searchModal .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+#searchModal .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+#searchModal .btn-outline-secondary:hover {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.drag-drop-area {
+    border: 2px dashed #007bff;
+    border-radius: 5px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+    background-color: #f8f9fa;
+}
+
+.drag-drop-area.dragover {
+    background-color: #e9ecef;
+    border-color: #28a745;
+}
+
+.drag-drop-content {
+    color: #6c757d;
+}
+
+.file-info {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: #007bff;
+}
+.warehouse-card {
+    display: flex;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.warehouse-card:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.warehouse-icon {
+    color: #62ff00;
+    margin-right: 5px;
+    font-size: 14px;
+}
+
+.warehouse-select {
+    flex-grow: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    color: #333;
+    padding-right: 15px;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cpath fill='%23333333' d='M6.862 2.195L4 5.057 1.138 2.195A.667.667 0 00.195 3.138l3.333 3.333a.667.667 0 00.943 0l3.333-3.333a.667.667 0 10-.943-.943z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+
+.warehouse-select:focus {
+    outline: none;
+}
+
+@media (max-width: 991.98px) {
+    .row-cols-md-3 > * {
+        margin-bottom: 0.5rem;
+    }
+}

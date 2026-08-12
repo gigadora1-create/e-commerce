@@ -1,0 +1,356 @@
+Y:root {
+    --radius: 20px;
+    --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* === MODO OSCURO (BRUTAL) === */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0a0a0a;
+        --page-gradient: linear-gradient(135deg, #000000 0%, #1a0000 100%);
+        --glass: rgba(15, 15, 15, 0.85);
+        --border-glow: #ff0000;
+        --text-primary: #ffffff;
+        --text-muted: #ff6666;
+        --input-bg: rgba(255, 255, 255, 0.1);
+        --input-text: #ffffff;
+        --btn-from: #ff1a1a;
+        --btn-to: #cc0000;
+        --led: #ff0000;
+        --led-glow: #ff3333;
+    }
+}
+
+/* === MODO CLARO (ÉPICO) === */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #f0f7ff;
+        --page-gradient: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+        --glass: rgba(255, 255, 255, 0.92);
+        --border-glow: #ff0000ff;
+        --text-primary: #000000;
+        --text-muted: #640000ff;
+        --input-bg: rgba(0, 0, 0, 0.06);
+        --input-text: #000000;
+        --btn-from: #cc0000ff;
+        --btn-to: #cc0000ff;
+        --led: #cc0000ff;
+        --led-glow: #cc0000ff;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--page-gradient);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    padding: 20px;
+    overflow-x: hidden;
+    transition: var(--transition);
+    color: var(--text-primary);
+}
+
+/* === FONDO CON GRADIENTE SUAVE === */
+.page-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: var(--page-gradient);
+    z-index: -2;
+}
+
+/* === CONTENEDOR FLOTANTE === */
+.login-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    animation: float 6s infinite ease-in-out;
+    z-index: 10;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+/* === GLASS CONTAINER CON BORDE NEÓN === */
+.login-container {
+    position: relative;
+    background: var(--glass);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: var(--radius);
+    padding: 50px 38px;
+    border: 1.5px solid var(--border-glow);
+    box-shadow: 
+        var(--shadow-lg),
+        0 0 40px var(--border-glow),
+        0 0 80px var(--border-glow) inset;
+    overflow: hidden;
+    animation: fadeIn 0.9s ease-out forwards;
+    opacity: 0;
+    z-index: 2;
+    color: var(--text-primary);
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+/* === LED PULSANTE DEBAJO === */
+.led-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 92vw;
+    max-width: 540px;
+    height: 92vw;
+    max-height: 540px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle at center,
+        var(--led) 0%,
+        var(--led-glow) 25%,
+        transparent 65%
+    );
+    filter: blur(28px);
+    opacity: 0.75;
+    transform: translate(-50%, -50%);
+    animation: pulseLED 3s ease-in-out infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+@keyframes pulseLED {
+    0%, 100% { 
+        opacity: 0.65; 
+        filter: blur(25px); 
+        transform: translate(-50%, -50%) scale(1);
+    }
+    50% { 
+        opacity: 0.95; 
+        filter: blur(35px); 
+        transform: translate(-50%, -50%) scale(1.08);
+    }
+}
+
+/* === LOGO === */
+.logo {
+    width: 125px;
+    height: auto;
+    display: block;
+    margin: 0 auto 30px;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+    transition: var(--transition);
+}
+
+.logo:hover {
+    transform: scale(1.1);
+}
+
+/* === TÍTULO CON GRADIENTE === */
+.welcome-text {
+    text-align: center;
+    font-size: 1.9rem;
+    font-weight: 900;
+    margin-bottom: 34px;
+    background: linear-gradient(90deg, 
+        var(--border-glow), 
+        #ff1e1eff, 
+        var(--border-glow)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.6px;
+}
+
+/* === INPUTS === */
+.form-group {
+    position: relative;
+    margin-bottom: 28px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 18px 20px 10px;
+    font-size: 1rem;
+    background: var(--input-bg);
+    border: 2px solid transparent;
+    border-radius: 14px;
+    color: var(--input-text);
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--border-glow);
+    box-shadow: 
+        0 0 0 4px rgba(0, 255, 0, 0.2),
+        0 0 20px var(--border-glow);
+    transform: translateY(-2px);
+}
+
+.form-label {
+    position: absolute;
+    left: 20px;
+    top: 18px;
+    font-size: 1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: var(--transition);
+    font-weight: 600;
+}
+
+.form-control:focus ~ .form-label,
+.form-control:not(:placeholder-shown) ~ .form-label {
+    top: 8px;
+    font-size: 0.8rem;
+    color: var(--border-glow);
+    font-weight: 700;
+}
+
+/* === TOGGLE === */
+.toggle-password {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.toggle-password:hover {
+    color: var(--border-glow);
+    transform: translateY(-50%) scale(1.2);
+}
+
+/* === CHECKBOX === */
+.custom-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.custom-control-input {
+    width: 19px;
+    height: 19px;
+    accent-color: var(--border-glow);
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.custom-control-label {
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* === BOTÓN PREMIUM === */
+.btn-login {
+    width: 100%;
+    padding: 17px;
+    background: linear-gradient(135deg, var(--btn-from), var(--btn-to));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: 1.12rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    transition: var(--transition);
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.7s ease;
+}
+
+.btn-login:hover::before { left: 100%; }
+.btn-login:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+}
+
+.btn-login:active {
+    transform: translateY(-1px);
+}
+
+/* === ENLACE === */
+.forgot-password {
+    display: block;
+    text-align: center;
+    margin-top: 26px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+.forgot-password:hover {
+    color: var(--border-glow);
+    text-decoration: underline;
+}
+
+/* === ALERTA === */
+.alert-danger {
+    background: rgba(255, 0, 0, 0.12);
+    border: 1px solid var(--border-glow);
+    color: var(--text-primary);
+    padding: 15px 18px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    text-align: center;
+    backdrop-filter: blur(6px);
+}
+
+/* === MENSAJES DE ERROR === */
+.error-message {
+    color: var(--border-glow);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    font-weight: 600;
+    min-height: 20px;
+    transition: all 0.3s ease;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 480px) {
+    .login-container {
+        padding: 38px 26px;
+        border-radius: 18px;
+    }
+    .welcome-text { font-size: 1.65rem; }
+    .logo { width: 105px; }
+    .led-ring { 
+        width: 82vw; 
+        height: 82vw; 
+        max-width: 420px; 
+        max-height: 420px; 
+    }
+}
