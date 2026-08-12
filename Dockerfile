@@ -1,6 +1,31 @@
-FROM composer:2 AS vendor
+FROM composer:2 AS composer_bin
+
+FROM php:8.2-cli AS vendor
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+        git \
+        libfreetype6-dev \
+        libicu-dev \
+        libjpeg62-turbo-dev \
+        libonig-dev \
+        libpng-dev \
+        libxml2-dev \
+        libzip-dev \
+        unzip \
+        zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+        bcmath \
+        gd \
+        intl \
+        mbstring \
+        pdo_mysql \
+        zip \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=composer_bin /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
 RUN composer install \
