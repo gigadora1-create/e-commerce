@@ -37,7 +37,8 @@ RUN composer install \
     --optimize-autoloader
 
 COPY . .
-RUN composer dump-autoload --optimize --no-dev \
+RUN mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && composer dump-autoload --optimize --no-dev \
     && php artisan package:discover --ansi
 
 FROM node:20-alpine AS assets
