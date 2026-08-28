@@ -53,8 +53,11 @@ class SupplyService
 
     public function auditRequest(Request $request, SupplyRequest $supplyRequest): SupplyRequest
     {
-        if ($supplyRequest->status !== SupplyRequest::STATUS_REQUESTED) {
-            throw new \Exception('Solo se pueden auditar solicitudes pendientes.');
+        if (!in_array($supplyRequest->status, [
+            SupplyRequest::STATUS_REQUESTED,
+            SupplyRequest::STATUS_PARTIAL,
+        ], true)) {
+            throw new \Exception('Solo se pueden registrar recepciones para solicitudes pendientes o con faltantes.');
         }
 
         return DB::transaction(function () use ($request, $supplyRequest) {
@@ -63,9 +66,9 @@ class SupplyService
             foreach ($supplyRequest->items as $item) {
                 $product = $item->product()->lockForUpdate()->firstOrFail();
                 $previousReceived = (int) $item->received_quantity;
-                $received = (int) ($request->input("received_quantity.{$item->id}") ?? 0);
+                $receivedNow = (int) ($request->input("received_quantity.{$item->id}") ?? 0);
+                $received = $previousReceived + $receivedNow;
                 $missing = max($item->requested_quantity - $received, 0);
-                $delta = $received - $previousReceived;
 
                 if ($missing > 0) {
                     $allComplete = false;
@@ -77,8 +80,8 @@ class SupplyService
                     'observation' => $request->input("observation.{$item->id}"),
                 ]);
 
-                if ($delta !== 0) {
-                    $this->updateProductStock($product, $delta, $request->user()?->id, $supplyRequest);
+                if ($receivedNow > 0) {
+                    $this->updateProductStock($product, $receivedNow, $request->user()?->id, $supplyRequest);
                 }
             }
 

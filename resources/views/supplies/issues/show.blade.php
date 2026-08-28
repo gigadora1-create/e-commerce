@@ -89,7 +89,9 @@
                                 <th>Solicitado</th>
                                 <th>Reservado</th>
                                 <th>Entregado</th>
-                                <th>Stock al solicitar</th>
+                                @if ($isAdmin)
+                                    <th>Stock al solicitar</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -100,7 +102,9 @@
                                     <td>{{ $item->requested_quantity }}</td>
                                     <td>{{ $item->reserved_quantity }}</td>
                                     <td>{{ $item->delivered_quantity }}</td>
-                                    <td>{{ $item->available_quantity_at_request }}</td>
+                                    @if ($isAdmin)
+                                        <td>{{ $item->available_quantity_at_request }}</td>
+                                    @endif
                                 </tr>
                             @endforeach
                         </tbody>
@@ -122,7 +126,7 @@
                             </form>
                         @endif
 
-                        @if (!in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_CLOSED, \App\Models\SupplyIssueRequest::STATUS_REJECTED], true))
+                        @if (in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_PREPARING, \App\Models\SupplyIssueRequest::STATUS_READY], true))
                             <form method="POST" action="{{ route('supplies.issues.reject', $issueRequest) }}">
                                 @csrf
                                 @method('PUT')
@@ -130,16 +134,63 @@
                             </form>
                         @endif
 
-                        @if (!in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_CLOSED, \App\Models\SupplyIssueRequest::STATUS_REJECTED], true))
+                        @if (in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_PREPARING, \App\Models\SupplyIssueRequest::STATUS_READY], true))
                             <form method="POST" action="{{ route('supplies.issues.close', $issueRequest) }}">
                                 @csrf
                                 @method('PUT')
-                                <button class="btn btn-success" type="submit">Cerrar y descontar stock</button>
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-sm align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Reservado</th>
+                                                <th style="width: 180px;">Entregar ahora</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($issueRequest->items as $item)
+                                                <tr>
+                                                    <td>{{ $item->product->catalog_number }} - {{ $item->product->name }}</td>
+                                                    <td>{{ $item->reserved_quantity }}</td>
+                                                    <td>
+                                                        <input type="number" class="form-control form-control-sm"
+                                                            name="delivered_quantity[{{ $item->id }}]"
+                                                            min="0" max="{{ $item->reserved_quantity }}"
+                                                            value="{{ old("delivered_quantity.{$item->id}", $item->reserved_quantity) }}" required>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <textarea class="form-control mb-3" name="admin_notes" rows="2"
+                                    placeholder="Observacion de entrega parcial o cierre">{{ old('admin_notes', $issueRequest->admin_notes) }}</textarea>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="1" name="support_received" id="supportReceived">
+                                    <label class="form-check-label" for="supportReceived">
+                                        El cliente entrego el soporte firmado
+                                    </label>
+                                </div>
+                                <button class="btn btn-success" type="submit">Registrar entrega y descontar stock</button>
                             </form>
+                        @endif
+
+                        @if ($issueRequest->status === \App\Models\SupplyIssueRequest::STATUS_PENDING_SUPPORT)
+                            <div class="border rounded p-3">
+                                <div class="fw-semibold mb-1">Cierre pendiente soporte</div>
+                                <p class="text-muted small mb-3">La salida ya fue descontada. Falta confirmar que el cliente entrego el formato firmado.</p>
+                                <form method="POST" action="{{ route('supplies.issues.confirm-support', $issueRequest) }}">
+                                    @csrf
+                                    @method('PUT')
+                                    <textarea class="form-control mb-3" name="admin_notes" rows="2"
+                                        placeholder="Observacion al recibir el soporte firmado"></textarea>
+                                    <button class="btn btn-success" type="submit">Confirmar soporte y cerrar solicitud</button>
+                                </form>
+                            </div>
                         @endif
                     </div>
                     <div class="text-muted small mt-3">
-                        El stock queda reservado desde la creacion. Solo al cerrar la solicitud se descuenta definitivamente del inventario.
+                        El stock queda reservado desde la creacion. Al registrar la entrega se descuenta del inventario; sin soporte firmado, la solicitud permanece pendiente de cierre.
                     </div>
                 </div>
             </div>

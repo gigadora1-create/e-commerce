@@ -11,6 +11,7 @@ class SupplyIssueRequest extends Model
 
     public const STATUS_PREPARING = 'preparing';
     public const STATUS_READY = 'ready';
+    public const STATUS_PENDING_SUPPORT = 'pending_support';
     public const STATUS_REJECTED = 'rejected';
     public const STATUS_CLOSED = 'closed';
 
@@ -63,6 +64,7 @@ class SupplyIssueRequest extends Model
     {
         return match ($this->status) {
             self::STATUS_READY => 'Listo para recoger',
+            self::STATUS_PENDING_SUPPORT => 'Cierre pendiente soporte',
             self::STATUS_REJECTED => 'Rechazada',
             self::STATUS_CLOSED => 'Cerrado',
             default => 'En alistamiento',
@@ -73,6 +75,7 @@ class SupplyIssueRequest extends Model
     {
         return match ($this->status) {
             self::STATUS_READY => 'info',
+            self::STATUS_PENDING_SUPPORT => 'primary',
             self::STATUS_REJECTED => 'danger',
             self::STATUS_CLOSED => 'success',
             default => 'warning',

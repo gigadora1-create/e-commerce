@@ -34,7 +34,10 @@ class SupplyPolicy
             return false;
         }
 
-        return $supplyRequest->status === SupplyRequest::STATUS_REQUESTED;
+        return in_array($supplyRequest->status, [
+            SupplyRequest::STATUS_REQUESTED,
+            SupplyRequest::STATUS_PARTIAL,
+        ], true);
     }
 
     public function viewRequest(User $user, SupplyRequest $supplyRequest): bool
@@ -80,10 +83,16 @@ class SupplyPolicy
             return false;
         }
 
-        return !in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_CLOSED,
-            SupplyIssueRequest::STATUS_REJECTED,
+        return in_array($issueRequest->status, [
+            SupplyIssueRequest::STATUS_PREPARING,
+            SupplyIssueRequest::STATUS_READY,
         ], true);
+    }
+
+    public function confirmSupport(User $user, SupplyIssueRequest $issueRequest): bool
+    {
+        return $user->can('supplies.admin')
+            && $issueRequest->status === SupplyIssueRequest::STATUS_PENDING_SUPPORT;
     }
 
     public function reject(User $user, SupplyIssueRequest $issueRequest): bool
@@ -92,9 +101,9 @@ class SupplyPolicy
             return false;
         }
 
-        return !in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_CLOSED,
-            SupplyIssueRequest::STATUS_REJECTED,
+        return in_array($issueRequest->status, [
+            SupplyIssueRequest::STATUS_PREPARING,
+            SupplyIssueRequest::STATUS_READY,
         ], true);
     }
 

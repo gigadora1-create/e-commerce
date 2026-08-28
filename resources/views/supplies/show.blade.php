@@ -10,9 +10,17 @@
             <div class="supplies-page-header">
                 <a href="{{ route('supplies.index') }}" class="text-decoration-none small text-muted">Volver a proveeduria</a>
                 <h1 class="h3 mb-1">{{ $supplyRequest->request_number }}</h1>
-                <p class="text-muted mb-0">Audite lo recibido contra la solicitud original y genere el soporte en PDF.</p>
+                <p class="text-muted mb-0">Audite cada entrega contra la solicitud original y registre los faltantes hasta completar el pedido.</p>
             </div>
             <div class="d-flex flex-wrap gap-2">
+                @if (!$supplyRequest->reqCaseSync || $supplyRequest->reqCaseSync->status !== \App\Models\SupplyReqCaseSync::STATUS_SYNCED)
+                    <form method="POST" action="{{ route('supplies.requests.sync-req', $supplyRequest) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="fas fa-rotate me-1"></i> Reintentar envio a req
+                        </button>
+                    </form>
+                @endif
                 @if ($supplyRequest->audited_at)
                     <a class="btn btn-danger" href="{{ route('supplies.requests.pdf', $supplyRequest) }}">
                         <i class="fas fa-file-pdf me-1"></i> Descargar PDF
@@ -42,6 +50,17 @@
                         <div class="mb-3">{{ $supplyRequest->auditedBy?->name ?? 'Sin auditoria' }}</div>
                         <div class="text-muted small">Fecha auditoria</div>
                         <div>{{ optional($supplyRequest->audited_at)->format('Y-m-d H:i') ?: 'Pendiente' }}</div>
+                        <hr>
+                        <div class="text-muted small">Integracion con req</div>
+                        @if ($supplyRequest->reqCaseSync?->status === \App\Models\SupplyReqCaseSync::STATUS_SYNCED)
+                            <div class="fw-semibold text-success">Caso creado: #{{ $supplyRequest->reqCaseSync->external_case_id }}</div>
+                            <div class="small text-muted">{{ optional($supplyRequest->reqCaseSync->synced_at)->format('Y-m-d H:i') }}</div>
+                        @elseif ($supplyRequest->reqCaseSync)
+                            <div class="fw-semibold text-warning">Pendiente de sincronizacion</div>
+                            <div class="small text-muted">{{ \Illuminate\Support\Str::limit($supplyRequest->reqCaseSync->last_error, 160) }}</div>
+                        @else
+                            <div class="small text-muted">Sin intento registrado.</div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -118,12 +137,13 @@
             </div>
         </div>
 
+        @if (in_array($supplyRequest->status, [\App\Models\SupplyRequest::STATUS_REQUESTED, \App\Models\SupplyRequest::STATUS_PARTIAL], true))
         <div class="card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <div class="supplies-section-title"><i class="fas fa-clipboard-check"></i> Auditoria de recibido</div>
-                        <p class="text-muted mb-0">Confirme cantidades, faltantes y deje el acta lista para firma manual en fisico.</p>
+                        <p class="text-muted mb-0">Registre solo lo que llego en esta entrega. El sistema acumula las recepciones anteriores y mantiene los faltantes abiertos.</p>
                     </div>
                 </div>
 
@@ -137,7 +157,8 @@
                                 <tr>
                                     <th>Producto</th>
                                     <th style="width: 140px;">Solicitado</th>
-                                    <th style="width: 160px;">Recibido</th>
+                                    <th style="width: 130px;">Recibido antes</th>
+                                    <th style="width: 160px;">Recibir ahora</th>
                                     <th>Observacion</th>
                                 </tr>
                             </thead>
@@ -148,13 +169,14 @@
                                             <div class="fw-semibold">{{ $item->product->catalog_number }} - {{ $item->product->name }}</div>
                                         </td>
                                         <td>{{ $item->requested_quantity }}</td>
+                                        <td>{{ $item->received_quantity }}</td>
                                         <td>
                                             <input type="number"
                                                 class="form-control"
                                                 min="0"
-                                                max="{{ $item->requested_quantity }}"
+                                                max="{{ $item->missing_quantity }}"
                                                 name="received_quantity[{{ $item->id }}]"
-                                                value="{{ old("received_quantity.{$item->id}", $item->received_quantity) }}"
+                                                value="{{ old("received_quantity.{$item->id}", 0) }}"
                                                 required>
                                         </td>
                                         <td>
@@ -209,6 +231,7 @@
                 </form>
             </div>
         </div>
+        @endif
     </div>
 @endsection
 

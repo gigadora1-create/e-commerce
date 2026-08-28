@@ -1,6 +1,6 @@
 @php
     $allProducts = $catalogProducts ?? collect();
-    $quantities = $issueRequest->items->mapWithKeys(fn ($item) => [$item->supply_product_id => (int) $item->requested_quantity]);
+    $quantities = $issueRequest->items->mapWithKeys(fn ($item) => [$item->supply_product_id => (int) $item->delivered_quantity]);
     $productRows = $allProducts->map(function ($product) use ($quantities) {
         return [
             'label' => $product->name,
@@ -118,9 +118,9 @@
     <table style="margin-top: 2px;">
         <tr>
             <td class="catalog-header article-cell">ARTICULO</td>
-            <td class="catalog-header qty-cell">CANTIDAD<br>SOLICITADA</td>
+            <td class="catalog-header qty-cell">CANTIDAD<br>ENTREGADA</td>
             <td class="catalog-header article-cell">ARTICULO</td>
-            <td class="catalog-header qty-cell">CANTIDAD<br>SOLICITADA</td>
+            <td class="catalog-header qty-cell">CANTIDAD<br>ENTREGADA</td>
         </tr>
         @for ($i = 0; $i < $rowCount; $i++)
             @php

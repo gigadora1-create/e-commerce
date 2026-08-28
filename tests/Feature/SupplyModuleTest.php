@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Mail\SupplyPurchaseRequestCreated;
 use App\Models\SupplyClient;
+use App\Models\SupplyIssueRequest;
+use App\Models\SupplyIssueRequestItem;
 use App\Models\SupplyProduct;
 use App\Models\SupplyPurchaseRecipient;
 use App\Models\SupplyRequest;
@@ -184,5 +186,100 @@ class SupplyModuleTest extends TestCase
 
         $this->assertSame(2, $sent);
         Mail::assertSent(SupplyPurchaseRequestCreated::class);
+    }
+
+    public function test_supply_analytics_tab_shows_client_consumption_metrics(): void
+    {
+        Permission::findOrCreate('supplies.admin', 'web');
+        Permission::findOrCreate('supplies.request', 'web');
+        Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin', 'supplies.request']);
+
+        $user = User::factory()->create([
+            'email' => 'supplies-analytics@example.com',
+        ]);
+        $user->syncRoles(['PROVEEDURIA_ADMIN']);
+
+        $client = SupplyClient::query()->firstOrFail();
+        $product = SupplyProduct::query()->firstOrFail();
+
+        $issueRequest = SupplyIssueRequest::query()->create([
+            'request_number' => 'SAL-TEST-001',
+            'requested_by_user_id' => $user->id,
+            'prepared_by_user_id' => $user->id,
+            'closed_by_user_id' => $user->id,
+            'supply_client_id' => $client->id,
+            'status' => SupplyIssueRequest::STATUS_CLOSED,
+            'requested_at' => now()->subDays(2),
+            'ready_at' => now()->subDay(),
+            'closed_at' => now()->subDay(),
+        ]);
+
+        SupplyIssueRequestItem::query()->create([
+            'supply_issue_request_id' => $issueRequest->id,
+            'supply_product_id' => $product->id,
+            'requested_quantity' => 6,
+            'reserved_quantity' => 6,
+            'delivered_quantity' => 6,
+            'available_quantity_at_request' => 20,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('supplies.index', [
+                'tab' => 'analytics',
+                'analytics_client_id' => $client->id,
+                'analytics_from' => now()->subWeek()->format('Y-m-d'),
+                'analytics_to' => now()->format('Y-m-d'),
+            ]))
+            ->assertOk()
+            ->assertSee('Analitica de consumo por cliente')
+            ->assertSee($client->name)
+            ->assertSee('Pendientes de soporte');
+    }
+
+    public function test_admin_can_parameterize_stock_thresholds_for_selected_supply_products(): void
+    {
+        Permission::findOrCreate('supplies.admin', 'web');
+        Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin']);
+
+        $user = User::factory()->create();
+        $user->syncRoles(['PROVEEDURIA_ADMIN']);
+
+        $product = SupplyProduct::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->put(route('supplies.products.stock-thresholds.update'), [
+                'apply_to' => 'selected',
+                'product_ids' => [$product->id],
+                'minimum_stock' => 8,
+                'medium_stock' => 20,
+            ])
+            ->assertRedirect(route('supplies.index', ['tab' => 'products']));
+
+        $product->refresh();
+        $this->assertSame(8, (int) $product->minimum_stock);
+        $this->assertSame(20, (int) $product->medium_stock);
+    }
+
+    public function test_supply_analytics_export_downloads_excel_file(): void
+    {
+        Permission::findOrCreate('supplies.admin', 'web');
+        Permission::findOrCreate('supplies.request', 'web');
+        Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin', 'supplies.request']);
+
+        $user = User::factory()->create([
+            'email' => 'supplies-export@example.com',
+        ]);
+        $user->syncRoles(['PROVEEDURIA_ADMIN']);
+
+        $client = SupplyClient::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->get(route('supplies.analytics.export', [
+                'analytics_client_id' => $client->id,
+                'analytics_from' => now()->subMonth()->format('Y-m-d'),
+                'analytics_to' => now()->format('Y-m-d'),
+            ]))
+            ->assertOk()
+            ->assertHeader('content-disposition');
     }
 }

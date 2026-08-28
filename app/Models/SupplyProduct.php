@@ -15,11 +15,15 @@ class SupplyProduct extends Model
         'description',
         'stock_on_hand',
         'reserved_stock',
+        'minimum_stock',
+        'medium_stock',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'minimum_stock' => 'integer',
+        'medium_stock' => 'integer',
     ];
 
     public function requestItems()

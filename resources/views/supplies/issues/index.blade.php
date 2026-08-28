@@ -10,7 +10,7 @@
             <div>
                 <h1 class="h3 mb-1">{{ $isAdmin ? 'Solicitudes de salida de proveeduria' : 'Mis solicitudes de proveeduria' }}</h1>
                 <p class="text-muted mb-0">
-                    {{ $isAdmin ? 'Administre alistamiento, retiro y cierre definitivo del stock reservado.' : 'Cree solicitudes contra stock disponible y consulte el estado de sus requerimientos.' }}
+                    {{ $isAdmin ? 'Administre alistamiento, retiro y cierre definitivo del stock reservado.' : 'Cree sus solicitudes y consulte el estado de sus requerimientos.' }}
                 </p>
             </div>
             <div class="d-flex flex-wrap gap-2">
@@ -243,7 +243,7 @@
 
                         <div class="mb-3">
                             <h6 class="mb-1">Productos solicitados</h6>
-                            <div class="text-muted small">Solo se puede reservar stock real disponible. Si no hay disponibilidad debe bajar la cantidad o dejarla en cero.</div>
+                            <div class="text-muted small">El sistema valida la disponibilidad real al enviar la solicitud. Si un producto no tiene unidades disponibles, se mostrara el aviso correspondiente.</div>
                         </div>
 
                         <div class="table-responsive supply-request-table-wrap">
@@ -252,7 +252,9 @@
                                     <tr>
                                         <th style="min-width: 420px;">Producto</th>
                                         <th style="width: 180px;">Cantidad</th>
-                                        <th style="width: 170px;">Stock</th>
+                                        @if ($isAdmin)
+                                            <th style="width: 170px;">Stock</th>
+                                        @endif
                                         <th style="width: 90px;"></th>
                                     </tr>
                                 </thead>
@@ -269,10 +271,13 @@
                                         </td>
                                         <td>
                                             <input type="number" min="0" class="form-control requested-quantity-input" name="requested_quantity[]" required>
+                                            <div class="availability-feedback invalid-feedback d-block"></div>
                                         </td>
-                                        <td>
-                                            <div class="stock-badge-container text-muted small">Seleccione un producto</div>
-                                        </td>
+                                        @if ($isAdmin)
+                                            <td>
+                                                <div class="stock-badge-container text-muted small">Seleccione un producto</div>
+                                            </td>
+                                        @endif
                                         <td class="text-end">
                                             <div class="request-row-actions"></div>
                                         </td>
@@ -318,7 +323,8 @@
                                             <td>{{ $product['name'] }}</td>
                                             <td>{{ $product['available_stock'] }}</td>
                                             <td>{{ $product['reserved_stock'] }}</td>
-                                            <td>{{ $product['label'] }} - {{ $product['note'] }}</td>
+                                            @php($levelClass = $product['key'] === 'critical' ? 'bg-danger' : ($product['key'] === 'warning' ? 'bg-warning text-dark' : 'bg-success'))
+                                            <td><span class="badge {{ $levelClass }}">{{ $product['label'] }}</span> <span class="small text-muted">{{ $product['note'] }}</span></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -341,8 +347,13 @@
             const catalogOptions = @json($catalogProductOptions);
             const clientOptions = @json($catalogClientOptions);
             const lowStockProducts = @json($lowStockProducts);
+            const canViewStock = @json($isAdmin);
+            const availabilityUrl = @json(route('supplies.issues.availability'));
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const requestCreationAllowed = @json($requestCreationAllowed);
             const requestCreationRestrictionMessage = @json($requestCreationRestrictionMessage);
+            let availabilityCheckTimer;
+            let availabilityCheckVersion = 0;
 
             document.getElementById('createSupplyIssueRequestButton')?.addEventListener('click', (event) => {
                 if (requestCreationAllowed) {
@@ -361,9 +372,9 @@
             function renderOptionsHtml(matches) {
                 return matches.length
                     ? matches.map((product) => `
-                        <button type="button" class="product-result-option" data-id="${product.id}" data-label="${product.label}" data-available="${product.available}">
+                        <button type="button" class="product-result-option" data-id="${product.id}" data-label="${product.label}" data-available="${product.available ?? ''}">
                             <span>${product.label}</span>
-                            <span class="product-result-stock">Disp: ${product.available}</span>
+                            ${canViewStock ? `<span class="product-result-stock">Disp: ${product.available}</span>` : ''}
                         </button>
                     `).join('')
                     : '<div class="product-result-empty">Sin coincidencias</div>';
@@ -384,23 +395,96 @@
                 const quantityInput = row.querySelector('.requested-quantity-input');
                 const searchInput = row.querySelector('.product-search-input');
 
-                if (!stockContainer || !quantityInput) {
+                if (!quantityInput) {
                     return;
                 }
 
-                quantityInput.max = available;
-                stockContainer.innerHTML = label
-                    ? `<span class="badge ${available > 0 ? 'bg-success' : 'bg-danger'}">Disponible: ${available}</span>`
-                    : '<span class="text-muted small">Seleccione un producto</span>';
-
-                if (Number(quantityInput.value || 0) > available) {
-                    quantityInput.value = available > 0 ? available : 0;
+                if (!canViewStock) {
+                    quantityInput.removeAttribute('max');
+                    return;
                 }
+
+                quantityInput.removeAttribute('max');
+                stockContainer.innerHTML = label
+                    ? (available > 0
+                        ? `<span class="badge bg-success">Disponible: ${available}</span>`
+                        : '<span class="badge bg-danger">No hay producto disponible para solicitar</span>')
+                    : '<span class="text-muted small">Seleccione un producto</span>';
 
                 if (available === 0 && searchInput) {
                     searchInput.classList.add('is-invalid');
+                    searchInput.setAttribute('title', 'No hay producto disponible para solicitar.');
                 } else if (searchInput) {
                     searchInput.classList.remove('is-invalid');
+                    searchInput.removeAttribute('title');
+                }
+            }
+
+            function clearAvailabilityFeedback(row) {
+                row.querySelector('.requested-quantity-input')?.classList.remove('is-invalid');
+                const feedback = row.querySelector('.availability-feedback');
+                if (feedback) {
+                    feedback.textContent = '';
+                }
+            }
+
+            function scheduleAvailabilityCheck() {
+                window.clearTimeout(availabilityCheckTimer);
+                availabilityCheckTimer = window.setTimeout(checkAvailability, 250);
+            }
+
+            async function checkAvailability() {
+                if (!requestItemsTableBody) {
+                    return;
+                }
+
+                const rows = Array.from(requestItemsTableBody.querySelectorAll('tr'));
+                const productIds = rows.map((row) => row.querySelector('.product-id-input')?.value || '');
+                const quantities = rows.map((row) => row.querySelector('.requested-quantity-input')?.value || 0);
+
+                rows.forEach(clearAvailabilityFeedback);
+
+                if (!productIds.some((productId, index) => productId && Number(quantities[index]) > 0)) {
+                    return;
+                }
+
+                const requestVersion = ++availabilityCheckVersion;
+
+                try {
+                    const response = await fetch(availabilityUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken || '',
+                        },
+                        body: JSON.stringify({
+                            product_id: productIds,
+                            requested_quantity: quantities,
+                        }),
+                    });
+
+                    if (!response.ok || requestVersion !== availabilityCheckVersion) {
+                        return;
+                    }
+
+                    const result = await response.json();
+                    rows.forEach((row) => {
+                        const productId = row.querySelector('.product-id-input')?.value;
+                        const message = result.errors?.[productId];
+
+                        if (!message) {
+                            return;
+                        }
+
+                        row.querySelector('.requested-quantity-input')?.classList.add('is-invalid');
+                        const feedback = row.querySelector('.availability-feedback');
+                        if (feedback) {
+                            feedback.textContent = message;
+                        }
+                    });
+                } catch (error) {
+                    // The final server-side validation remains authoritative if the live check is unavailable.
                 }
             }
 
@@ -459,7 +543,9 @@
                 searchInput?.addEventListener('input', () => {
                     productIdInput.value = '';
                     updateRowAvailability(row, 0);
+                    clearAvailabilityFeedback(row);
                     renderProductOptions(row);
+                    scheduleAvailabilityCheck();
                 });
 
                 searchInput?.addEventListener('focus', () => {
@@ -472,9 +558,11 @@
                     const max = Number(quantityInput.max || 0);
                     const current = Number(quantityInput.value || 0);
 
-                    if (max >= 0 && current > max) {
+                    if (canViewStock && max > 0 && current > max) {
                         quantityInput.value = max;
                     }
+
+                    scheduleAvailabilityCheck();
                 });
 
                 resultsContainer?.addEventListener('click', (event) => {
@@ -490,6 +578,7 @@
                     resultsContainer.innerHTML = '';
                     resultsContainer.classList.remove('is-visible');
                     updateRowAvailability(row, Number(option.dataset.available || 0), option.dataset.label);
+                    scheduleAvailabilityCheck();
                 });
             }
 
@@ -507,10 +596,9 @@
                     </td>
                     <td>
                         <input type="number" min="0" class="form-control requested-quantity-input" name="requested_quantity[]" required>
+                        <div class="availability-feedback invalid-feedback d-block"></div>
                     </td>
-                    <td>
-                        <div class="stock-badge-container text-muted small">Seleccione un producto</div>
-                    </td>
+                    ${canViewStock ? `<td><div class="stock-badge-container text-muted small">Seleccione un producto</div></td>` : ''}
                     <td class="text-end">
                         <div class="request-row-actions"></div>
                     </td>
@@ -541,12 +629,15 @@
                     rows[0].querySelector('.product-search-results').innerHTML = '';
                     rows[0].querySelector('.product-search-results').classList.remove('is-visible');
                     updateRowAvailability(rows[0], 0);
+                    clearAvailabilityFeedback(rows[0]);
+                    scheduleAvailabilityCheck();
                     refreshRowActions();
                     return;
                 }
 
                 removeButton.closest('tr')?.remove();
                 refreshRowActions();
+                scheduleAvailabilityCheck();
             });
 
             requestItemsTableBody?.querySelectorAll('tr').forEach((row) => attachRowListeners(row));

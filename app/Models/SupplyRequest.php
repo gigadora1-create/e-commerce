@@ -54,6 +54,11 @@ class SupplyRequest extends Model
         return $this->belongsTo(SupplyClient::class, 'supply_client_id');
     }
 
+    public function reqCaseSync()
+    {
+        return $this->hasOne(SupplyReqCaseSync::class, 'supply_request_id');
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\SupplyClient;
 use App\Models\SupplyIssueRequest;
+use App\Models\SupplyProduct;
 use App\Models\SupplyRequest;
 use App\Models\User;
 use App\Policies\SupplyPolicy;
@@ -19,6 +20,7 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         SupplyClient::class => SupplyPolicy::class,
+        SupplyProduct::class => SupplyPolicy::class,
         SupplyRequest::class => SupplyPolicy::class,
         SupplyIssueRequest::class => SupplyPolicy::class,
     ];

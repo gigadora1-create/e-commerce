@@ -1,58 +1,62 @@
+@php
+    $allProducts = $catalogProducts ?? collect();
+    $quantities = $supplyRequest->items->mapWithKeys(fn ($item) => [$item->supply_product_id => (int) $item->received_quantity]);
+    $productRows = $allProducts->map(function ($product) use ($quantities) {
+        return [
+            'label' => $product->name,
+            'quantity' => $quantities[$product->id] ?? '',
+        ];
+    })->values();
+    $half = (int) ceil(max($productRows->count(), 1) / 2);
+    $leftRows = $productRows->slice(0, $half)->values();
+    $rightRows = $productRows->slice($half)->values();
+    $rowCount = max($leftRows->count(), $rightRows->count(), 18);
+    $fixedArticleArea = 455;
+    $adaptiveRows = $rowCount + 3;
+    $articleRowHeight = max(8.9, min(13.2, $fixedArticleArea / max($adaptiveRows, 1)));
+    $articleFontSize = max(4.9, min(6.0, 4.9 + (($articleRowHeight - 8.9) * 0.38)));
+    $qtyFontSize = max(5.2, min(6.2, 5.2 + (($articleRowHeight - 8.9) * 0.24)));
+    $articleLineHeight = $rowCount > 22 ? 0.96 : 1.02;
+    $logoPath = public_path('images/logogle.png');
+    $requestDate = optional($supplyRequest->requested_at)->format('d/m/Y');
+    $missingSummary = $supplyRequest->items
+        ->filter(fn ($item) => (int) $item->missing_quantity > 0)
+        ->map(fn ($item) => $item->product->name . ': faltan ' . $item->missing_quantity)
+        ->implode(' | ');
+    $otherNotes = trim(collect([
+        $supplyRequest->audit_notes,
+        $missingSummary ? 'Faltantes: ' . $missingSummary : null,
+    ])->filter()->implode(' | '));
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>{{ $supplyRequest->request_number }}</title>
     <style>
-        @page { margin: 18px 22px; }
-        body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #111; }
+        @page { margin: 12px 16px; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 8.2px; color: #111; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        td, th { border: 1px solid #222; padding: 3px 4px; vertical-align: middle; }
-        .no-border { border: 0; }
+        td, th { border: 1px solid #222; padding: 2px 3px; vertical-align: middle; }
         .center { text-align: center; }
-        .right { text-align: right; }
         .bold { font-weight: bold; }
-        .tiny { font-size: 8px; }
-        .small { font-size: 9px; }
-        .title { font-size: 16px; font-weight: bold; line-height: 1.1; }
-        .logo-cell img { width: 120px; }
-        .header-note { font-size: 8px; font-weight: bold; letter-spacing: 0.3px; }
+        .tiny { font-size: 7px; }
+        .small { font-size: 8px; }
+        .title { font-size: 13.5px; font-weight: bold; line-height: 1.08; }
+        .logo-cell img { width: 135px; }
+        .header-note { font-size: 7px; font-weight: bold; letter-spacing: 0.2px; }
         .section-label { font-weight: bold; text-transform: uppercase; }
-        .catalog-header { font-size: 9px; font-weight: bold; text-align: center; }
-        .catalog-name { font-size: 8px; }
-        .qty-cell { width: 11%; text-align: center; font-size: 8px; }
+        .catalog-header { font-size: 7px; font-weight: bold; text-align: center; line-height: 1.05; }
+        .catalog-name { font-size: {{ $articleFontSize }}px; line-height: {{ $articleLineHeight }}; }
+        .qty-cell { width: 10%; text-align: center; font-size: {{ $qtyFontSize }}px; line-height: 1; }
         .article-cell { width: 39%; }
-        .line-space { height: 22px; }
-        .signature-box { height: 90px; vertical-align: top; }
-        .responsible-name { margin-top: 34px; font-weight: bold; text-transform: uppercase; }
+        .article-row td { height: {{ $articleRowHeight }}px; }
+        .line-space { height: {{ $articleRowHeight }}px; }
+        .signature-box { height: 62px; vertical-align: top; }
+        .responsible-name { margin-top: 18px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body>
-    @php
-        $allProducts = $catalogProducts ?? collect();
-        $quantities = $supplyRequest->items->mapWithKeys(fn ($item) => [$item->supply_product_id => (int) $item->received_quantity]);
-        $productRows = $allProducts->map(function ($product) use ($quantities) {
-            return [
-                'label' => $product->name,
-                'quantity' => $quantities[$product->id] ?? '',
-            ];
-        })->values();
-        $half = (int) ceil(max($productRows->count(), 1) / 2);
-        $leftRows = $productRows->slice(0, $half)->values();
-        $rightRows = $productRows->slice($half)->values();
-        $rowCount = max($leftRows->count(), $rightRows->count(), 18);
-        $logoPath = public_path('images/logogle.png');
-        $requestDate = optional($supplyRequest->requested_at)->format('d/m/Y');
-        $missingSummary = $supplyRequest->items
-            ->filter(fn ($item) => (int) $item->missing_quantity > 0)
-            ->map(fn ($item) => $item->product->name . ': faltan ' . $item->missing_quantity)
-            ->implode(' | ');
-        $otherNotes = trim(collect([
-            $supplyRequest->audit_notes,
-            $missingSummary ? 'Faltantes: ' . $missingSummary : null,
-        ])->filter()->implode(' | '));
-    @endphp
-
     <table>
         <tr>
             <td class="logo-cell center" rowspan="2" style="width: 28%;">
@@ -114,7 +118,7 @@
                 $left = $leftRows[$i] ?? ['label' => '', 'quantity' => ''];
                 $right = $rightRows[$i] ?? ['label' => '', 'quantity' => ''];
             @endphp
-            <tr>
+            <tr class="article-row">
                 <td class="catalog-name">{{ $left['label'] }}</td>
                 <td class="qty-cell">{{ $left['quantity'] }}</td>
                 <td class="catalog-name">{{ $right['label'] }}</td>
@@ -124,7 +128,7 @@
         <tr>
             <td colspan="4" class="section-label center">Otros</td>
         </tr>
-        @for ($line = 0; $line < 4; $line++)
+        @for ($line = 0; $line < 3; $line++)
             <tr>
                 <td colspan="4" class="line-space">
                     @if ($line === 0)
@@ -147,7 +151,7 @@
             </td>
             <td class="signature-box center">
                 <div class="bold">Firma o sello:</div>
-                <div style="margin-top: 48px;">&nbsp;</div>
+                <div style="margin-top: 40px;">&nbsp;</div>
             </td>
         </tr>
     </table>

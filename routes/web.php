@@ -61,9 +61,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [SupplyController::class, 'index'])
             ->middleware('can:supplies.admin')
             ->name('index');
+        Route::get('/analytics/export', [SupplyController::class, 'analyticsExport'])
+            ->middleware('can:supplies.admin')
+            ->name('analytics.export');
         Route::post('/products', [SupplyController::class, 'storeProduct'])
             ->middleware('can:supplies.admin')
             ->name('products.store');
+        Route::put('/products/stock-thresholds', [SupplyController::class, 'updateStockThresholds'])
+            ->middleware('can:supplies.admin')
+            ->name('products.stock-thresholds.update');
         Route::put('/products/{product}', [SupplyController::class, 'updateProduct'])
             ->middleware('can:supplies.admin')
             ->name('products.update');
@@ -103,6 +109,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/requests/{supplyRequest}/audit', [SupplyController::class, 'auditRequest'])
             ->middleware('can:supplies.admin')
             ->name('requests.audit');
+        Route::post('/requests/{supplyRequest}/sync-req', [SupplyController::class, 'syncReqCase'])
+            ->middleware('can:supplies.admin')
+            ->name('requests.sync-req');
         Route::get('/requests/{supplyRequest}/pdf', [SupplyController::class, 'pdf'])
             ->middleware('can:supplies.admin')
             ->name('requests.pdf');
@@ -114,6 +123,9 @@ Route::middleware('auth')->group(function () {
             Route::post('/', [SupplyIssueController::class, 'store'])
                 ->middleware('can:supplies.request')
                 ->name('store');
+            Route::post('/availability', [SupplyIssueController::class, 'checkAvailability'])
+                ->middleware('can:supplies.request')
+                ->name('availability');
             Route::get('/{issueRequest}', [SupplyIssueController::class, 'show'])
                 ->middleware('can:supplies.request')
                 ->name('show');
@@ -126,6 +138,9 @@ Route::middleware('auth')->group(function () {
             Route::put('/{issueRequest}/close', [SupplyIssueController::class, 'close'])
                 ->middleware('can:supplies.admin')
                 ->name('close');
+            Route::put('/{issueRequest}/confirm-support', [SupplyIssueController::class, 'confirmSupport'])
+                ->middleware('can:supplies.admin')
+                ->name('confirm-support');
             Route::put('/{issueRequest}/reject', [SupplyIssueController::class, 'reject'])
                 ->middleware('can:supplies.admin')
                 ->name('reject');

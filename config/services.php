@@ -30,6 +30,12 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+    'req_supply' => [
+        'url' => env('REQ_SUPPLY_URL'),
+        'token' => env('REQ_SUPPLY_TOKEN'),
+        'timeout' => env('REQ_SUPPLY_TIMEOUT', 10),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

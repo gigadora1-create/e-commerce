@@ -46,7 +46,9 @@ class SupplyIssueService
 
                 if ($available < $quantity) {
                     $stockErrors["requested_quantity.{$productId}"] =
-                        "No hay stock suficiente para {$product->name}. Disponible: {$available}.";
+                        $available > 0
+                            ? "La cantidad solicitada para {$product->name} supera la disponibilidad actual."
+                            : "No hay producto disponible para solicitar: {$product->name}.";
                     continue;
                 }
 
@@ -123,8 +125,11 @@ class SupplyIssueService
 
     public function close(Request $request, SupplyIssueRequest $issueRequest): SupplyIssueRequest
     {
-        if ($issueRequest->status === SupplyIssueRequest::STATUS_CLOSED) {
-            throw new \Exception('La solicitud ya fue cerrada.');
+        if (!in_array($issueRequest->status, [
+            SupplyIssueRequest::STATUS_PREPARING,
+            SupplyIssueRequest::STATUS_READY,
+        ], true)) {
+            throw new \Exception('Solo se pueden registrar entregas para solicitudes en alistamiento o listas para recoger.');
         }
 
         return DB::transaction(function () use ($request, $issueRequest) {
@@ -132,9 +137,17 @@ class SupplyIssueService
 
             foreach ($items as $item) {
                 $product = SupplyProduct::query()->lockForUpdate()->findOrFail($item->supply_product_id);
-                $quantity = (int) $item->reserved_quantity;
+                $reservedQuantity = (int) $item->reserved_quantity;
+                $quantity = (int) ($request->input("delivered_quantity.{$item->id}") ?? $reservedQuantity);
 
-                $product->reserved_stock = max(((int) $product->reserved_stock) - $quantity, 0);
+                if ($quantity < 0 || $quantity > $reservedQuantity) {
+                    throw ValidationException::withMessages([
+                        "delivered_quantity.{$item->id}" => 'La cantidad entregada debe estar entre 0 y la cantidad reservada.',
+                    ]);
+                }
+
+                // Release the full reservation; only the delivered quantity leaves physical stock.
+                $product->reserved_stock = max(((int) $product->reserved_stock) - $reservedQuantity, 0);
                 $product->stock_on_hand = max(((int) $product->stock_on_hand) - $quantity, 0);
                 $product->save();
 
@@ -151,19 +164,42 @@ class SupplyIssueService
                     'reserved_stock_after' => (int) $product->reserved_stock,
                     'reference_type' => SupplyIssueRequest::class,
                     'reference_id' => $issueRequest->id,
-                    'notes' => 'Salida definitiva por cierre de solicitud ' . $issueRequest->request_number,
+                    'notes' => 'Salida definitiva por cierre de solicitud ' . $issueRequest->request_number
+                        . " ({$quantity} entregada(s) de {$reservedQuantity} reservada(s))",
                 ]);
             }
 
+            $supportReceived = $request->boolean('support_received');
+
             $issueRequest->update([
-                'status' => SupplyIssueRequest::STATUS_CLOSED,
-                'closed_by_user_id' => $request->user()?->id,
-                'closed_at' => now(),
+                'status' => $supportReceived
+                    ? SupplyIssueRequest::STATUS_CLOSED
+                    : SupplyIssueRequest::STATUS_PENDING_SUPPORT,
+                'closed_by_user_id' => $supportReceived ? $request->user()?->id : null,
+                'closed_at' => $supportReceived ? now() : null,
                 'admin_notes' => $request->input('admin_notes'),
             ]);
 
             return $issueRequest;
         });
+    }
+
+    public function confirmSupport(Request $request, SupplyIssueRequest $issueRequest): SupplyIssueRequest
+    {
+        if ($issueRequest->status !== SupplyIssueRequest::STATUS_PENDING_SUPPORT) {
+            throw new \Exception('La solicitud no esta pendiente de soporte firmado.');
+        }
+
+        $issueRequest->update([
+            'status' => SupplyIssueRequest::STATUS_CLOSED,
+            'closed_by_user_id' => $request->user()?->id,
+            'closed_at' => now(),
+            'admin_notes' => $request->filled('admin_notes')
+                ? $request->input('admin_notes')
+                : $issueRequest->admin_notes,
+        ]);
+
+        return $issueRequest;
     }
 
     public function reject(Request $request, SupplyIssueRequest $issueRequest): SupplyIssueRequest
@@ -172,8 +208,11 @@ class SupplyIssueService
             throw new \Exception('La solicitud ya fue rechazada.');
         }
 
-        if ($issueRequest->status === SupplyIssueRequest::STATUS_CLOSED) {
-            throw new \Exception('No se puede rechazar una solicitud cerrada.');
+        if (in_array($issueRequest->status, [
+            SupplyIssueRequest::STATUS_CLOSED,
+            SupplyIssueRequest::STATUS_PENDING_SUPPORT,
+        ], true)) {
+            throw new \Exception('No se puede rechazar una solicitud que ya fue entregada.');
         }
 
         return DB::transaction(function () use ($request, $issueRequest) {
