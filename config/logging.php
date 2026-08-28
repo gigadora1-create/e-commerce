@@ -54,7 +54,8 @@ return [
     'channels' => [
         'stack' => [
             'driver' => 'stack',
-            'channels' => ['single'],
+            // Keep the persisted log while exposing exceptions in container logs for Coolify.
+            'channels' => array_filter(explode(',', env('LOG_STACK', 'single,stderr'))),
             'ignore_exceptions' => false,
         ],
 
