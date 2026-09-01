@@ -12,7 +12,9 @@ class TrustProxies extends Middleware
      *
      * @var array<int, string>|string|null
      */
-    protected $proxies;
+    // Coolify terminates TLS at its reverse proxy before forwarding to Apache.
+    // Trust its forwarded headers so Laravel keeps generated URLs on HTTPS.
+    protected $proxies = '*';
 
     /**
      * The headers that should be used to detect proxies.
