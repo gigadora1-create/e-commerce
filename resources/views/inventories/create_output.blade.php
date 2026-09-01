@@ -46,7 +46,7 @@
                                     <div class="form-group">
                                         <div class="item-image-container" style="display: none;">
                                             <div class="image-wrapper">
-                                                <img class="product-image item-image" src="" alt="Imagen del producto" onerror="this.onerror=null; this.src='/images/no-image.png';">
+                                                <img class="product-image item-image" src="" alt="Imagen del producto" onerror="this.onerror=null; this.src='{{ asset('img/no-image.png') }}';">
                                             </div>
                                         </div>
                                     </div>

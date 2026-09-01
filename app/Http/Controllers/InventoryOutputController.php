@@ -419,8 +419,8 @@ class InventoryOutputController extends Controller
     {
         $item = Item::where('name', $itemDescription)->first();
 
-        if ($item && $item->ruta) {
-            return response()->json(['image_url' => asset('images/' . $item->ruta)]);
+        if ($item) {
+            return response()->json(['image_url' => $item->image_url]);
         }
 
         return response()->json(['image_url' => null]);
@@ -568,12 +568,7 @@ class InventoryOutputController extends Controller
             ->limit(10)
             ->get();
 
-        $itemsWithImages = $items->map(function ($item) {
-            $item->image_url = $item->ruta ? asset('images/' . $item->ruta) : null;
-            return $item;
-        });
-
-        return response()->json($itemsWithImages);
+        return response()->json($items);
     }
 
     public function searchWarehouses(Request $request)
@@ -762,14 +757,29 @@ class InventoryOutputController extends Controller
      */
     private function getWarehouseInventoriesOptimized($customers, $userCities, $isAdmin)
     {
-        // Replicar la primera parte del UNION de vw_inventory_unified
-        // Solo ubicaciones normales (no ALMACENAMIENTO) con item_locations asignados
+        // Aggregate outputs once. The previous correlated subqueries scanned every
+        // inventory output repeatedly for each item/location shown on the page.
+        $outputsByItemLocation = DB::table('inventory_outputs')
+            ->select([
+                'item_id',
+                'localizacion',
+                DB::raw('ABS(SUM(CASE WHEN status = "devolucion" THEN quantity ELSE 0 END)) as total_returns'),
+                DB::raw('SUM(CASE WHEN status <> "devolucion" THEN quantity ELSE 0 END) as total_outputs'),
+                DB::raw('MAX(updated_at) as last_output_at'),
+            ])
+            ->groupBy('item_id', 'localizacion');
+
+        // Only normal locations with assigned items are displayed here.
         $query = DB::table('locations as l')
             ->join('item_locations as il', 'l.location_id', '=', 'il.location_id')
             ->join('items as it', 'il.item_id', '=', 'it.item_id')
             ->leftJoin('inventories as i', function ($join) {
                 $join->on('it.item_id', '=', 'i.item_id')
                     ->on('i.localizacion', '=', 'l.code');
+            })
+            ->leftJoinSub($outputsByItemLocation, 'io', function ($join) {
+                $join->on('io.item_id', '=', 'it.item_id')
+                    ->on('io.localizacion', '=', 'l.code');
             })
             ->where('l.is_active', 1)
             ->where('l.code', '!=', 'ALMACENAMIENTO')
@@ -801,77 +811,19 @@ class InventoryOutputController extends Controller
                 'it.sku',
                 'it.name as item_description',
 
-                // original_entries: suma de INGRESO + SALIDA
                 DB::raw('COALESCE(SUM(CASE WHEN i.status IN ("INGRESO", "SALIDA") THEN i.quantity ELSE 0 END), 0) as original_entries'),
-
-                // total_returns: devoluciones desde inventory_outputs
-                DB::raw('ABS(COALESCE((
-                    SELECT SUM(io.quantity) 
-                    FROM inventory_outputs io 
-                    WHERE io.item_id = it.item_id 
-                    AND io.localizacion = l.code 
-                    AND io.status = "devolucion"
-                ), 0)) as total_returns'),
-
-                // total_retention: suma de retenciones
+                DB::raw('COALESCE(MAX(io.total_returns), 0) as total_returns'),
                 DB::raw('COALESCE(SUM(CASE WHEN i.status = "RETENCION" THEN i.quantity ELSE 0 END), 0) as total_retention'),
-
-                // total_outputs: salidas (excluyendo devoluciones)
-                DB::raw('COALESCE((
-                    SELECT SUM(io.quantity) 
-                    FROM inventory_outputs io 
-                    WHERE io.item_id = it.item_id 
-                    AND io.localizacion = l.code 
-                    AND io.status <> "devolucion"
-                ), 0) as total_outputs'),
-
-                // current_stock: (original_entries - total_outputs + total_returns) - total_retention
-                DB::raw('COALESCE((
-                    (
-                        SUM(CASE WHEN i.status IN ("INGRESO", "SALIDA") THEN i.quantity ELSE 0 END) 
-                        - COALESCE((
-                            SELECT SUM(io.quantity) 
-                            FROM inventory_outputs io 
-                            WHERE io.item_id = it.item_id 
-                            AND io.localizacion = l.code 
-                            AND io.status <> "devolucion"
-                        ), 0)
-                        + ABS(COALESCE((
-                            SELECT SUM(io.quantity) 
-                            FROM inventory_outputs io 
-                            WHERE io.item_id = it.item_id 
-                            AND io.localizacion = l.code 
-                            AND io.status = "devolucion"
-                        ), 0))
-                    ) - SUM(CASE WHEN i.status = "RETENCION" THEN i.quantity ELSE 0 END)
-                ), 0) as current_stock'),
-
-                // alert_level: basado en max_capacity
-                DB::raw('CASE 
-                    WHEN COALESCE((
-                        (
-                            SUM(CASE WHEN i.status IN ("INGRESO", "SALIDA") THEN i.quantity ELSE 0 END) 
-                            - COALESCE((SELECT SUM(io.quantity) FROM inventory_outputs io WHERE io.item_id = it.item_id AND io.localizacion = l.code AND io.status <> "devolucion"), 0)
-                            + ABS(COALESCE((SELECT SUM(io.quantity) FROM inventory_outputs io WHERE io.item_id = it.item_id AND io.localizacion = l.code AND io.status = "devolucion"), 0))
-                        ) - SUM(CASE WHEN i.status = "RETENCION" THEN i.quantity ELSE 0 END)
-                    ), 0) >= COALESCE(il.max_capacity, 0) THEN "danger"
-                    WHEN COALESCE((
-                        (
-                            SUM(CASE WHEN i.status IN ("INGRESO", "SALIDA") THEN i.quantity ELSE 0 END) 
-                            - COALESCE((SELECT SUM(io.quantity) FROM inventory_outputs io WHERE io.item_id = it.item_id AND io.localizacion = l.code AND io.status <> "devolucion"), 0)
-                            + ABS(COALESCE((SELECT SUM(io.quantity) FROM inventory_outputs io WHERE io.item_id = it.item_id AND io.localizacion = l.code AND io.status = "devolucion"), 0))
-                        ) - SUM(CASE WHEN i.status = "RETENCION" THEN i.quantity ELSE 0 END)
-                    ), 0) >= (COALESCE(il.max_capacity, 0) * 0.8) THEN "warning"
-                    ELSE "success"
-                END as alert_level'),
-
-                // last_modified_date
+                DB::raw('COALESCE(MAX(io.total_outputs), 0) as total_outputs'),
                 DB::raw('COALESCE(
-                    GREATEST(
-                        COALESCE(MAX(i.updated_at), "1970-01-01"),
-                        COALESCE((SELECT MAX(io.updated_at) FROM inventory_outputs io WHERE io.item_id = it.item_id AND io.localizacion = l.code), "1970-01-01")
-                    ),
-                    "1970-01-01"
+                    SUM(CASE WHEN i.status IN ("INGRESO", "SALIDA") THEN i.quantity ELSE 0 END)
+                    - COALESCE(MAX(io.total_outputs), 0)
+                    + COALESCE(MAX(io.total_returns), 0)
+                    - SUM(CASE WHEN i.status = "RETENCION" THEN i.quantity ELSE 0 END),
+                0) as current_stock'),
+                DB::raw('GREATEST(
+                    COALESCE(MAX(i.updated_at), "1970-01-01"),
+                    COALESCE(MAX(io.last_output_at), "1970-01-01")
                 ) as last_modified_date')
             ])
             ->get();

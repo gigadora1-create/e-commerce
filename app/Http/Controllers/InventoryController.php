@@ -810,9 +810,9 @@ public function searchItems(Request $request)
                 ->orWhere('description', 'like', "%{$productName}%")
                 ->first();
 
-            if ($item && $item->ruta) {
+            if ($item) {
                 return response()->json([
-                    'image_url' => asset('images/' . $item->ruta)
+                    'image_url' => $item->image_url
                 ]);
             }
 

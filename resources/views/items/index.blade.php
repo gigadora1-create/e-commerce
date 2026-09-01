@@ -90,7 +90,7 @@
                             <tbody>
                                 <tr>
                                     <th scope="row">Imagen</th>
-                                    <td><img id="show-image" src="" alt="Producto" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='/images/no-image.png';"></td>
+                                    <td><img id="show-image" src="" alt="Producto" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='{{ asset('img/no-image.png') }}';"></td>
                                 </tr>
                                 <tr>
                                     <th scope="row">Nombre</th>
@@ -223,9 +223,10 @@
                         }
                     },
                     {
-                        data: 'ruta',
-                        render: function(data) {
-                            return `<img src="/images/${data}" alt="Producto" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='/images/no-image.png';">`;
+                        data: 'image_url',
+                        render: function(url) {
+                            const fallback = '{{ asset('img/no-image.png') }}';
+                            return `<img src="${url || fallback}" alt="Producto" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;" onerror="this.onerror=null; this.src='${fallback}';">`;
                         }
                     },
                     { data: 'name' },
@@ -432,7 +433,7 @@
                     success: function(response) {
                         let item = response.data.find(p => p.item_id == itemId);
                         if (item) {
-                            $('#show-image').attr('src', `/images/${item.ruta}`);
+                            $('#show-image').attr('src', item.image_url);
                             $('#show-name').text(item.name);
                             $('#show-description').text(item.description);
                             $('#show-sku').text(item.sku);

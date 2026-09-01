@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Item extends Model
 {
     use HasFactory;
 
     protected $primaryKey = 'item_id';
+
+    protected $appends = ['image_url'];
 
     protected $fillable = [
         'name', 'description', 'sku', 'barcode', 'ruta'
@@ -66,11 +70,27 @@ class Item extends Model
                     ->where('inventory_id', $inventoryId);
     }
 
-    // Obtener la URL de la imagen (mantenida)
-public function getImageUrlAttribute()
-{
-    return $this->ruta ? asset('images/' . $this->ruta) : asset('images/no-image.png');
-}
+    public function getImageUrlAttribute(): string
+    {
+        return static::imageUrlFor($this->ruta);
+    }
+
+    public static function imageUrlFor(?string $ruta): string
+    {
+        $path = ltrim((string) $ruta, '/');
+
+        if ($path === '') {
+            return asset('img/no-image.png');
+        }
+
+        // New uploads live on Laravel's public disk, backed by the persistent
+        // storage volume in production. Existing records keep their legacy path.
+        if (Str::startsWith($path, 'items/')) {
+            return Storage::disk('public')->url($path);
+        }
+
+        return asset('images/' . basename($path));
+    }
 
 
     // Obtener la cantidad total en todas las ubicaciones (actualizada)

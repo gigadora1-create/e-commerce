@@ -15,22 +15,22 @@ return new class extends Migration {
     public function up(): void
     {
         // Índices para inventory_outputs
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventory_outputs_lookup ON inventory_outputs(inventory_id, status, quantity)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventory_outputs_customer_warehouse ON inventory_outputs(customer, warehouse, status)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventory_outputs_date ON inventory_outputs(created_at, status)');
+        $this->createIndexIfMissing('inventory_outputs', 'idx_inventory_outputs_lookup', 'inventory_id, status, quantity');
+        $this->createIndexIfMissing('inventory_outputs', 'idx_inventory_outputs_customer_warehouse', 'customer, warehouse, status');
+        $this->createIndexIfMissing('inventory_outputs', 'idx_inventory_outputs_date', 'created_at, status');
 
         // Índices para inventories
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventories_item_location_lookup ON inventories(item_id, location_id, warehouse, customer, status)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventories_sku_lookup ON inventories(sku, customer, warehouse)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventories_retention ON inventories(status, retention_substatus, customer)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_inventories_location_code ON inventories(localizacion, warehouse, customer)');
+        $this->createIndexIfMissing('inventories', 'idx_inventories_item_location_lookup', 'item_id, location_id, warehouse, customer, status');
+        $this->createIndexIfMissing('inventories', 'idx_inventories_sku_lookup', 'sku, customer, warehouse');
+        $this->createIndexIfMissing('inventories', 'idx_inventories_retention', 'status, retention_substatus, customer');
+        $this->createIndexIfMissing('inventories', 'idx_inventories_location_code', 'localizacion, warehouse, customer');
 
         // Índices para picking_reservations
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_picking_reservations_inventory ON picking_reservations(inventory_id, quantity_reserved)');
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_picking_reservations_order ON picking_reservations(picking_order_id, inventory_id)');
+        $this->createIndexIfMissing('picking_reservations', 'idx_picking_reservations_inventory', 'inventory_id, quantity_reserved');
+        $this->createIndexIfMissing('picking_reservations', 'idx_picking_reservations_order', 'picking_order_id, inventory_id');
 
         // Índices para picking_orders
-        DB::statement('CREATE INDEX IF NOT EXISTS idx_picking_orders_status ON picking_orders(id, status)');
+        $this->createIndexIfMissing('picking_orders', 'idx_picking_orders_status', 'id, status');
     }
 
     /**
@@ -38,18 +38,41 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        DB::statement('DROP INDEX IF EXISTS idx_inventory_outputs_lookup ON inventory_outputs');
-        DB::statement('DROP INDEX IF EXISTS idx_inventory_outputs_customer_warehouse ON inventory_outputs');
-        DB::statement('DROP INDEX IF EXISTS idx_inventory_outputs_date ON inventory_outputs');
+        $this->dropIndexIfExists('inventory_outputs', 'idx_inventory_outputs_lookup');
+        $this->dropIndexIfExists('inventory_outputs', 'idx_inventory_outputs_customer_warehouse');
+        $this->dropIndexIfExists('inventory_outputs', 'idx_inventory_outputs_date');
 
-        DB::statement('DROP INDEX IF EXISTS idx_inventories_item_location_lookup ON inventories');
-        DB::statement('DROP INDEX IF EXISTS idx_inventories_sku_lookup ON inventories');
-        DB::statement('DROP INDEX IF EXISTS idx_inventories_retention ON inventories');
-        DB::statement('DROP INDEX IF EXISTS idx_inventories_location_code ON inventories');
+        $this->dropIndexIfExists('inventories', 'idx_inventories_item_location_lookup');
+        $this->dropIndexIfExists('inventories', 'idx_inventories_sku_lookup');
+        $this->dropIndexIfExists('inventories', 'idx_inventories_retention');
+        $this->dropIndexIfExists('inventories', 'idx_inventories_location_code');
 
-        DB::statement('DROP INDEX IF EXISTS idx_picking_reservations_inventory ON picking_reservations');
-        DB::statement('DROP INDEX IF EXISTS idx_picking_reservations_order ON picking_reservations');
+        $this->dropIndexIfExists('picking_reservations', 'idx_picking_reservations_inventory');
+        $this->dropIndexIfExists('picking_reservations', 'idx_picking_reservations_order');
 
-        DB::statement('DROP INDEX IF EXISTS idx_picking_orders_status ON picking_orders');
+        $this->dropIndexIfExists('picking_orders', 'idx_picking_orders_status');
+    }
+
+    private function createIndexIfMissing(string $table, string $index, string $columns): void
+    {
+        if (!$this->indexExists($table, $index)) {
+            DB::statement("CREATE INDEX `{$index}` ON `{$table}` ({$columns})");
+        }
+    }
+
+    private function dropIndexIfExists(string $table, string $index): void
+    {
+        if ($this->indexExists($table, $index)) {
+            DB::statement("DROP INDEX `{$index}` ON `{$table}`");
+        }
+    }
+
+    private function indexExists(string $table, string $index): bool
+    {
+        return DB::table('information_schema.statistics')
+            ->where('table_schema', DB::getDatabaseName())
+            ->where('table_name', $table)
+            ->where('index_name', $index)
+            ->exists();
     }
 };

@@ -1374,10 +1374,10 @@ function renderStorageProducts(container, items, locationId, groupByLetter) {
                  data-stock="${currentStock}"
                  data-max-capacity="${maxCapacity}">
                 <div class="product-info">
-                    <img src="${item.image_url || '/images/no-image.png'}" 
+                    <img src="${item.image_url || '{{ asset('img/no-image.png') }}'}"
                          alt="${item.name || 'Sin nombre'}" 
                          class="product-image"
-                         onerror="this.src='/images/no-image.png'"
+                         onerror="this.src='{{ asset('img/no-image.png') }}'"
                          style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
                     <div class="product-details">
                         <div class="product-name" style="font-weight: 500; font-size: 14px;">${item.name || 'Sin nombre'}</div>

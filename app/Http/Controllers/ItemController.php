@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Item;
 use App\Models\ItemLocation;
 
@@ -29,7 +30,7 @@ class ItemController extends Controller
                                 'sku' => $item->sku,
                                 'barcode' => $item->barcode,
                                 'ruta' => $item->ruta,
-                                'image_url' => $item->ruta ? asset('images/' . $item->ruta) : null,
+                                'image_url' => $item->image_url,
                                 'primary_location' => $primaryLocation ? [
                                 'location_id' => $primaryLocation->location_id,
                                     'code' => $primaryLocation->code,
@@ -64,8 +65,7 @@ class ItemController extends Controller
         try {
             $imageName = null;
             if ($request->hasFile('image')) {
-                $imageName = time() . '.' . $request->image->extension();
-                $request->image->move(public_path('images'), $imageName);
+                $imageName = $request->file('image')->store('items', 'public');
             }
 
             $item = Item::create([
@@ -106,11 +106,8 @@ class ItemController extends Controller
             $data = $request->only('name', 'description', 'sku', 'barcode');
 
             if ($request->hasFile('image')) {
-                if ($item->ruta && file_exists(public_path('images/' . $item->ruta))) {
-                    unlink(public_path('images/' . $item->ruta));
-                }
-                $imageName = time() . '.' . $request->image->extension();
-                $request->image->move(public_path('images'), $imageName);
+                $this->deleteImage($item->ruta);
+                $imageName = $request->file('image')->store('items', 'public');
                 $data['ruta'] = $imageName;
             }
 
@@ -134,9 +131,7 @@ class ItemController extends Controller
                 ], 400);
             }
 
-            if ($item->ruta && file_exists(public_path('images/' . $item->ruta))) {
-                unlink(public_path('images/' . $item->ruta));
-            }
+            $this->deleteImage($item->ruta);
 
             $item->delete();
 
@@ -169,7 +164,7 @@ class ItemController extends Controller
                     'name' => $item->name,
                     'sku' => $item->sku,
                     'barcode' => $item->barcode,
-                    'image_url' => $item->ruta ? asset('images/' . $item->ruta) : null
+                    'image_url' => $item->image_url
                 ],
                 'locations' => $locations
             ]);
@@ -191,7 +186,7 @@ class ItemController extends Controller
                                 'name' => $item->name,
                                 'sku' => $item->sku,
                                 'barcode' => $item->barcode,
-                                'image_url' => $item->ruta ? asset('images/' . $item->ruta) : null
+                                'image_url' => $item->image_url
                             ];
                         });
             return response()->json(['data' => $items]);
@@ -215,7 +210,7 @@ class ItemController extends Controller
                                             'name' => $itemLocation->item->name,
                                             'sku' => $itemLocation->item->sku,
                                             'barcode' => $itemLocation->item->barcode,
-                                            'image_url' => $itemLocation->item->ruta ? asset('images/' . $itemLocation->item->ruta) : null,
+                                            'image_url' => $itemLocation->item->image_url,
                                             'quantity' => $itemLocation->current_quantity,
                                             'assigned_at' => $itemLocation->assigned_at
                                         ];
@@ -235,6 +230,23 @@ class ItemController extends Controller
         } catch (\Exception $e) {
             Log::error('Error al generar reporte: ' . $e->getMessage());
             return response()->json(['data' => [], 'error' => 'Error al generar el reporte'], 500);
+        }
+    }
+
+    private function deleteImage(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        if (str_starts_with($path, 'items/')) {
+            Storage::disk('public')->delete($path);
+            return;
+        }
+
+        $legacyPath = public_path('images/' . basename($path));
+        if (is_file($legacyPath)) {
+            unlink($legacyPath);
         }
     }
 }
