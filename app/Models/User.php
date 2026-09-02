@@ -81,7 +81,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('PROVEEDURIA_ADMIN')
             && !$this->isSuperAdmin()
-            && $this->getRoleNames()->count() === 1;
+            && $this->hasOnlySupplyRoles();
     }
 
     public function isSupplyRequesterOnly(): bool
@@ -89,7 +89,19 @@ class User extends Authenticatable
         return $this->hasRole('PROVEEDURIA_USUARIO')
             && !$this->isSupplyAdmin()
             && !$this->isSuperAdmin()
-            && $this->getRoleNames()->count() === 1;
+            && $this->hasOnlySupplyRoles();
+    }
+
+    /**
+     * A user with one or more Proveeduria roles must not inherit navigation
+     * to unrelated modules merely because the operational roles are combined.
+     */
+    public function hasOnlySupplyRoles(): bool
+    {
+        $roles = $this->getRoleNames();
+
+        return $roles->isNotEmpty()
+            && $roles->every(fn (string $role): bool => str_starts_with($role, 'PROVEEDURIA_'));
     }
 
     public function customerAccesses()

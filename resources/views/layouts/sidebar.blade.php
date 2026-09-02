@@ -27,11 +27,24 @@
             </a>
         </li>
     @elseif($isSupplyAdminOnly)
-        <li class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('supplies.index') }}">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
+                id="supplyOnlyDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Proveeduria</span>
             </a>
+            <div class="dropdown-menu" aria-labelledby="supplyOnlyDropdown">
+                <a class="dropdown-item" href="{{ route('supplies.index') }}">
+                    <i class="fas fa-dolly-flatbed"></i> Abastecimiento
+                </a>
+                <a class="dropdown-item" href="{{ route('supplies.index', ['tab' => 'products']) }}">
+                    <i class="fas fa-box-open"></i> Catalogo Proveeduria
+                </a>
+                <a class="dropdown-item" href="{{ route('supplies.issues.index') }}">
+                    <i class="fas fa-file-export"></i> Solicitudes usuarios
+                </a>
+            </div>
         </li>
     @elseif($isSupplyRequesterOnly)
         <li class="nav-item">
