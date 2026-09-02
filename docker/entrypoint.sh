@@ -11,7 +11,12 @@ if [ ! -L public/storage ]; then
     php artisan storage:link >/dev/null 2>&1 || true
 fi
 
-if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
+if [ -n "${DEPLOY_MIGRATION_PATHS:-}" ]; then
+    printf '%s' "$DEPLOY_MIGRATION_PATHS" | tr ',' '\n' | while IFS= read -r migration_path; do
+        [ -n "$migration_path" ] || continue
+        php artisan migrate --path="$migration_path" --force
+    done
+elif [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     php artisan migrate --force
 fi
 
