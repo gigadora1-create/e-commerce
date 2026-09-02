@@ -79,7 +79,7 @@
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'products' ? 'active' : '' }}"
                     href="{{ route('supplies.index', array_merge(request()->query(), ['tab' => 'products'])) }}">
-                    Catalogo
+                    Catalogo Proveeduria
                 </a>
             </li>
             <li class="nav-item">
@@ -167,7 +167,7 @@
                 <div class="card-body">
                     <div class="supplies-toolbar mb-3">
                         <div>
-                            <div class="supplies-section-title"><i class="fas fa-boxes-stacked"></i> Catalogo de productos</div>
+                            <div class="supplies-section-title"><i class="fas fa-boxes-stacked"></i> Catalogo Proveeduria</div>
                             <p class="text-muted mb-0">Administre el listado base de papeleria y proveeduria.</p>
                         </div>
                     </div>

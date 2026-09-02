@@ -14,6 +14,9 @@
         $isSupplyRequesterOnly = auth()->check() && method_exists(auth()->user(), 'isSupplyRequesterOnly')
             ? auth()->user()->isSupplyRequesterOnly()
             : false;
+        $isSupplyAdminOnly = auth()->check() && method_exists(auth()->user(), 'isSupplyAdminOnly')
+            ? auth()->user()->isSupplyAdminOnly()
+            : false;
     @endphp
 
     @if($isWarehouseOnly)
@@ -21,6 +24,13 @@
             <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('warehouse.index') }}">
                 <i class="fas fa-warehouse"></i>
                 <span>Bodega / Trazabilidad</span>
+            </a>
+        </li>
+    @elseif($isSupplyAdminOnly)
+        <li class="nav-item">
+            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('supplies.index') }}">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Proveeduria</span>
             </a>
         </li>
     @elseif($isSupplyRequesterOnly)
@@ -83,7 +93,7 @@
                             <i class="fas fa-dolly-flatbed"></i> Abastecimiento
                         </a>
                         <a class="dropdown-item" href="{{ route('supplies.index', ['tab' => 'products']) }}">
-                            <i class="fas fa-box-open"></i> Catalogo
+                            <i class="fas fa-box-open"></i> Catalogo Proveeduria
                         </a>
                     @endif
                     @if(auth()->user()->isSuperAdmin() || auth()->user()->can('supplies.request'))

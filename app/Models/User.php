@@ -77,6 +77,13 @@ class User extends Authenticatable
         return $this->hasRole('PROVEEDURIA_ADMIN') || $this->can('supplies.admin');
     }
 
+    public function isSupplyAdminOnly(): bool
+    {
+        return $this->hasRole('PROVEEDURIA_ADMIN')
+            && !$this->isSuperAdmin()
+            && $this->getRoleNames()->count() === 1;
+    }
+
     public function isSupplyRequesterOnly(): bool
     {
         return $this->hasRole('PROVEEDURIA_USUARIO')

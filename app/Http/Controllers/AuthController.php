@@ -212,6 +212,14 @@ class AuthController extends Controller
 
     protected function redirectAfterAuthentication(Request $request)
     {
+        if ($request->user() && method_exists($request->user(), 'isSupplyAdminOnly') && $request->user()->isSupplyAdminOnly()) {
+            return redirect()->route('supplies.index');
+        }
+
+        if ($request->user() && method_exists($request->user(), 'isSupplyRequesterOnly') && $request->user()->isSupplyRequesterOnly()) {
+            return redirect()->route('supplies.issues.index');
+        }
+
         if (!session()->has('selected_customers') || count(session('selected_customers', [])) === 0) {
             $customerAccess = app(CustomerAccessService::class);
             $allowedCustomers = $customerAccess->availableCustomers($request->user());
@@ -227,10 +235,6 @@ class AuthController extends Controller
                     return redirect()->route('warehouse.index');
                 }
 
-                if ($request->user() && method_exists($request->user(), 'isSupplyRequesterOnly') && $request->user()->isSupplyRequesterOnly()) {
-                    return redirect()->route('supplies.issues.index');
-                }
-
                 return redirect()->intended(route('dashboard'));
             }
 
@@ -239,10 +243,6 @@ class AuthController extends Controller
 
         if ($request->user() && method_exists($request->user(), 'isWarehouseOnly') && $request->user()->isWarehouseOnly()) {
             return redirect()->route('warehouse.index');
-        }
-
-        if ($request->user() && method_exists($request->user(), 'isSupplyRequesterOnly') && $request->user()->isSupplyRequesterOnly()) {
-            return redirect()->route('supplies.issues.index');
         }
 
         return redirect()->intended(route('dashboard'));

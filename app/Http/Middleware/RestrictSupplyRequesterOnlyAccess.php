@@ -17,7 +17,10 @@ class RestrictSupplyRequesterOnlyAccess
 
         $user = $request->user();
 
-        if (!$user || !method_exists($user, 'isSupplyRequesterOnly') || !$user->isSupplyRequesterOnly()) {
+        $isSupplyRequesterOnly = $user && method_exists($user, 'isSupplyRequesterOnly') && $user->isSupplyRequesterOnly();
+        $isSupplyAdminOnly = $user && method_exists($user, 'isSupplyAdminOnly') && $user->isSupplyAdminOnly();
+
+        if (!$isSupplyRequesterOnly && !$isSupplyAdminOnly) {
             return $next($request);
         }
 
@@ -32,14 +35,13 @@ class RestrictSupplyRequesterOnlyAccess
             'customer.context.clear',
         ];
 
-        if ($routeName && (Str::startsWith($routeName, 'supplies.issues.') || in_array($routeName, $allowedRoutes, true))) {
-            return $next($request);
-        }
+        $canAccessSupplyRoute = $routeName && (
+            ($isSupplyAdminOnly && Str::startsWith($routeName, 'supplies.'))
+            || ($isSupplyRequesterOnly && Str::startsWith($routeName, 'supplies.issues.'))
+        );
 
-        if ((!session()->has('selected_customers') || count(session('selected_customers', [])) === 0) && !session()->has('selected_customer')) {
-            return redirect()
-                ->route('customer.context.index')
-                ->with('warning', 'Selecciona un cliente para continuar.');
+        if ($canAccessSupplyRoute || ($routeName && in_array($routeName, $allowedRoutes, true))) {
+            return $next($request);
         }
 
         if ($request->expectsJson()) {
@@ -49,7 +51,7 @@ class RestrictSupplyRequesterOnlyAccess
         }
 
         return redirect()
-            ->route('supplies.issues.index')
+            ->route($isSupplyAdminOnly ? 'supplies.index' : 'supplies.issues.index')
             ->with('warning', 'Tu acceso esta restringido al modulo Proveeduria.');
     }
 }
