@@ -1,8 +1,10 @@
 FROM composer:2 AS composer_bin
 
-FROM php:8.2-cli AS vendor
+FROM php:8.2-apache AS php_base
 
-WORKDIR /app
+WORKDIR /var/www/html
+
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN apt-get update && apt-get install -y \
         git \
@@ -11,7 +13,6 @@ RUN apt-get update && apt-get install -y \
         libjpeg62-turbo-dev \
         libonig-dev \
         libpng-dev \
-        libxml2-dev \
         libzip-dev \
         unzip \
         zip \
@@ -23,7 +24,14 @@ RUN apt-get update && apt-get install -y \
         mbstring \
         pdo_mysql \
         zip \
+    && a2enmod rewrite headers \
+    && sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf \
+    && sed -ri "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
     && rm -rf /var/lib/apt/lists/*
+
+FROM php_base AS vendor
+
+WORKDIR /app
 
 COPY --from=composer_bin /usr/bin/composer /usr/bin/composer
 
@@ -53,35 +61,7 @@ COPY public ./public
 COPY vite.config.js ./
 RUN npm run build
 
-FROM php:8.2-apache
-
-WORKDIR /var/www/html
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-
-RUN apt-get update && apt-get install -y \
-        git \
-        libfreetype6-dev \
-        libicu-dev \
-        libjpeg62-turbo-dev \
-        libonig-dev \
-        libpng-dev \
-        libxml2-dev \
-        libzip-dev \
-        unzip \
-        zip \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        bcmath \
-        gd \
-        intl \
-        mbstring \
-        pdo_mysql \
-        zip \
-    && a2enmod rewrite headers \
-    && sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/*.conf \
-    && sed -ri "s!/var/www/!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
-    && rm -rf /var/lib/apt/lists/*
+FROM php_base
 
 COPY --from=vendor /app /var/www/html
 COPY --from=assets /app/public/build /var/www/html/public/build
