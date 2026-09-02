@@ -13,7 +13,10 @@
         @endif
 
         <div class="mb-3">
-            <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Agregar Usuario</a>
+            <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Agregar usuario manual</a>
+            <button type="button" class="btn btn-outline-primary" id="sync-hr-users">
+                <i class="fas fa-sync-alt"></i> Actualizar desde RH
+            </button>
         </div>
 
         @if($profiles->isEmpty())
@@ -28,9 +31,10 @@
                             <th>Id</th>
                             <th>Nombre</th>
                             <th>Correo</th>
-                            <th>Teléfono</th>
-                            <th>Dirección</th>
-                            <th>Tipo de Usuario</th>
+                            <th>Cargo</th>
+                            <th>Proceso</th>
+                            <th>Regional</th>
+                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -40,9 +44,10 @@
                                 <td>{{ $rs->id }}</td>
                                 <td>{{ $rs->name }}</td>
                                 <td>{{ $rs->email }}</td>
-                                <td>{{ $rs->telephone ?? 'N/A' }}</td>
-                                <td>{{ $rs->address ?? 'N/A' }}</td>
-                                <td>{{ $rs->user_type }}</td>
+                                <td>{{ $rs->position ?? 'N/A' }}</td>
+                                <td>{{ $rs->process ?? 'N/A' }}</td>
+                                <td>{{ $rs->regional ?? 'N/A' }}</td>
+                                <td><span class="badge bg-{{ $rs->is_active ? 'success' : 'secondary' }}">{{ $rs->is_active ? 'Activo' : 'Inactivo' }}</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-secondary show-user" data-id="{{ $rs->id }}" data-bs-toggle="modal" data-bs-target="#showUserModal" title="Ver Detalles"><i class="fas fa-eye"></i></button>
                                     <button class="btn btn-sm btn-warning edit-user" data-id="{{ $rs->id }}" data-bs-toggle="modal" data-bs-target="#editUserModal" title="Editar Usuario"><i class="fas fa-edit"></i></button>
@@ -54,15 +59,11 @@
                     </tbody>
                 </table>
             </div>
-            <!-- Paginación -->
-            <div class="pagination">
-                {{ $profiles->links('pagination::bootstrap-5') }}
-            </div>
         @endif
     </div>
 
     <!-- Modal para Crear Usuario -->
-    <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal fade profile-user-modal" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -91,19 +92,22 @@
                             <input type="text" class="form-control" id="create-address" name="address">
                         </div>
                         <div class="form-group mb-3">
-                            <label for="create-password">Contraseña <span class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="create-password" name="password" required>
-                            <div class="invalid-feedback"></div>
+                            <label for="create-position">Cargo</label>
+                            <input type="text" class="form-control" id="create-position" name="position">
                         </div>
                         <div class="form-group mb-3">
-                            <label for="create-user_type">Tipo de Usuario <span class="text-danger">*</span></label>
-                            <select class="form-control" id="create-user_type" name="user_type" required>
-                                <option value="">Seleccione un tipo</option>
-                                <option value="Administrador">Administrador</option>
-                                <option value="Usuario">Usuario</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
+                            <label for="create-process">Proceso</label>
+                            <input type="text" class="form-control" id="create-process" name="process">
                         </div>
+                        <div class="form-group mb-3">
+                            <label for="create-regional">Regional</label>
+                            <input type="text" class="form-control" id="create-regional" name="regional">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="create-is-active" name="is_active" checked>
+                            <label class="form-check-label" for="create-is-active">Usuario activo</label>
+                        </div>
+                        <p class="small text-muted mb-0">La contraseña inicial se genera automáticamente.</p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
@@ -115,7 +119,7 @@
     </div>
 
     <!-- Modal para Mostrar Usuario -->
-    <div class="modal fade" id="showUserModal" tabindex="-1" aria-labelledby="showUserModalLabel" aria-hidden="true">
+    <div class="modal fade profile-user-modal" id="showUserModal" tabindex="-1" aria-labelledby="showUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -139,16 +143,24 @@
                                     <td id="show-email"></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Teléfono</th>
-                                    <td id="show-telephone"></td>
+                                    <th scope="row">Cargo</th>
+                                    <td id="show-position"></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Dirección</th>
-                                    <td id="show-address"></td>
+                                    <th scope="row">Proceso</th>
+                                    <td id="show-process"></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row">Tipo de Usuario</th>
-                                    <td id="show-user_type"></td>
+                                    <th scope="row">Regional</th>
+                                    <td id="show-regional"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Estado</th>
+                                    <td id="show-is-active"></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Última sincronización RH</th>
+                                    <td id="show-synced-from-hr-at"></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -162,7 +174,7 @@
     </div>
 
     <!-- Modal para Editar Usuario -->
-    <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal fade profile-user-modal" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -198,13 +210,20 @@
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="edit-user_type">Tipo de Usuario <span class="text-danger">*</span></label>
-                            <select class="form-control" id="edit-user_type" name="user_type" required>
-                                <option value="">Seleccione un tipo</option>
-                                <option value="Administrador">Administrador</option>
-                                <option value="Usuario">Usuario</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
+                            <label for="edit-position">Cargo</label>
+                            <input type="text" class="form-control" id="edit-position" name="position">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="edit-process">Proceso</label>
+                            <input type="text" class="form-control" id="edit-process" name="process">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="edit-regional">Regional</label>
+                            <input type="text" class="form-control" id="edit-regional" name="regional">
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" value="1" id="edit-is-active" name="is_active">
+                            <label class="form-check-label" for="edit-is-active">Usuario activo</label>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -262,7 +281,7 @@
                 },
                 responsive: true,
                 columnDefs: [
-                    { "orderable": false, "targets": 6 } // Deshabilitar ordenación en la columna de Acciones
+                    { "orderable": false, "targets": 7 } // Deshabilitar ordenación en la columna de Acciones
                 ]
             });
 
@@ -284,6 +303,49 @@
                     confirmButtonText: 'Aceptar'
                 });
             }
+
+            $('#sync-hr-users').on('click', function() {
+                const button = $(this);
+
+                Swal.fire({
+                    title: '¿Actualizar usuarios desde RH?',
+                    text: 'Se crearán usuarios nuevos y se actualizarán nombre, correo, cargo, proceso y regional.',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Actualizar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    button.prop('disabled', true);
+                    $.ajax({
+                        url: "{{ route('profiles.sync-hr') }}",
+                        type: 'POST',
+                        data: { _token: "{{ csrf_token() }}" },
+                        success: function(response) {
+                            Swal.fire({
+                                title: 'Proceso completado',
+                                text: response.message,
+                                icon: 'success',
+                                confirmButtonText: 'Aceptar'
+                            }).then(() => location.reload());
+                        },
+                        error: function(xhr) {
+                            Swal.fire({
+                                title: 'Error de sincronización',
+                                text: xhr.responseJSON?.message || 'No fue posible consultar Recursos Humanos.',
+                                icon: 'error',
+                                confirmButtonText: 'Aceptar'
+                            });
+                        },
+                        complete: function() {
+                            button.prop('disabled', false);
+                        }
+                    });
+                });
+            });
 
             // Validación del formulario de creación
             $("#create-user-form").on('submit', function(e) {
@@ -327,14 +389,6 @@
                             $("#create-email").addClass('is-invalid');
                             $("#create-email").next('.invalid-feedback').text(errors.email[0]);
                         }
-                        if (errors.password) {
-                            $("#create-password").addClass('is-invalid');
-                            $("#create-password").next('.invalid-feedback').text(errors.password[0]);
-                        }
-                        if (errors.user_type) {
-                            $("#create-user_type").addClass('is-invalid');
-                            $("#create-user_type").next('.invalid-feedback').text(errors.user_type[0]);
-                        }
                         
                         Swal.fire({
                             title: 'Error',
@@ -359,7 +413,10 @@
                         $('#edit-email').val(data.email);
                         $('#edit-telephone').val(data.telephone || '');
                         $('#edit-address').val(data.address || '');
-                        $('#edit-user_type').val(data.user_type);
+                        $('#edit-position').val(data.position || '');
+                        $('#edit-process').val(data.process || '');
+                        $('#edit-regional').val(data.regional || '');
+                        $('#edit-is-active').prop('checked', Boolean(data.is_active));
                         $('#edit-password').val('');
                     },
                     error: function() {
@@ -421,10 +478,6 @@
                             $("#edit-password").addClass('is-invalid');
                             $("#edit-password").next('.invalid-feedback').text(errors.password[0]);
                         }
-                        if (errors.user_type) {
-                            $("#edit-user_type").addClass('is-invalid');
-                            $("#edit-user_type").next('.invalid-feedback').text(errors.user_type[0]);
-                        }
                         
                         Swal.fire({
                             title: 'Error',
@@ -447,9 +500,11 @@
                         $('#show-id').text(data.id);
                         $('#show-name').text(data.name);
                         $('#show-email').text(data.email);
-                        $('#show-telephone').text(data.telephone || 'N/A');
-                        $('#show-address').text(data.address || 'N/A');
-                        $('#show-user_type').text(data.user_type);
+                        $('#show-position').text(data.position || 'N/A');
+                        $('#show-process').text(data.process || 'N/A');
+                        $('#show-regional').text(data.regional || 'N/A');
+                        $('#show-is-active').text(data.is_active ? 'Activo' : 'Inactivo');
+                        $('#show-synced-from-hr-at').text(data.synced_from_hr_at || 'Manual');
                     },
                     error: function() {
                         Swal.fire({
@@ -518,14 +573,14 @@
             $('#createUserModal').on('show.bs.modal', function() {
                 $('#create-user-form')[0].reset();
                 $('#create-user-form').removeClass('was-validated');
-                $('#create-name, #create-email, #create-password, #create-user_type').removeClass('is-invalid');
+                $('#create-name, #create-email').removeClass('is-invalid');
                 $('#create-user-form .invalid-feedback').text('');
             });
 
             // Limpiar el formulario al abrir el modal de editar
             $('#editUserModal').on('show.bs.modal', function() {
                 $('#edit-user-form').removeClass('was-validated');
-                $('#edit-name, #edit-email, #edit-password, #edit-user_type').removeClass('is-invalid');
+                $('#edit-name, #edit-email, #edit-password').removeClass('is-invalid');
                 $('#edit-user-form .invalid-feedback').text('');
             });
 
@@ -558,6 +613,64 @@
         .btn-primary:hover {
             background-color: #0056b3;
             border-color: #004085;
+        }
+        .dataTables_length select {
+            margin: 0 0.45rem;
+        }
+        .dataTables_filter input {
+            margin-left: 0.45rem;
+        }
+        html.dark-mode .profile-user-modal .modal-content,
+        html.dark-mode .profile-user-modal .modal-header,
+        html.dark-mode .profile-user-modal .modal-body,
+        html.dark-mode .profile-user-modal .modal-footer,
+        body.dark-mode .profile-user-modal .modal-content,
+        body.dark-mode .profile-user-modal .modal-header,
+        body.dark-mode .profile-user-modal .modal-body,
+        body.dark-mode .profile-user-modal .modal-footer {
+            background-color: #161b22 !important;
+            color: #f8fafc !important;
+            border-color: #46505c !important;
+        }
+        html.dark-mode .profile-user-modal label,
+        html.dark-mode .profile-user-modal th,
+        html.dark-mode .profile-user-modal td,
+        html.dark-mode .profile-user-modal .text-muted,
+        body.dark-mode .profile-user-modal label,
+        body.dark-mode .profile-user-modal th,
+        body.dark-mode .profile-user-modal td,
+        body.dark-mode .profile-user-modal .text-muted {
+            color: #e2e8f0 !important;
+        }
+        html.dark-mode .profile-user-modal .form-control,
+        body.dark-mode .profile-user-modal .form-control {
+            background-color: #0f141b !important;
+            color: #f8fafc !important;
+            border-color: #64748b !important;
+        }
+        html.dark-mode .profile-user-modal .form-control::placeholder,
+        body.dark-mode .profile-user-modal .form-control::placeholder {
+            color: #aab6c5 !important;
+        }
+        html.dark-mode .profile-user-modal .form-check-input,
+        body.dark-mode .profile-user-modal .form-check-input {
+            background-color: #0b1017 !important;
+            border-color: #94a3b8 !important;
+        }
+        html.dark-mode .profile-user-modal .form-check-input:checked,
+        body.dark-mode .profile-user-modal .form-check-input:checked {
+            background-color: #dc2626 !important;
+            border-color: #dc2626 !important;
+        }
+        html.dark-mode .profile-user-modal .table,
+        body.dark-mode .profile-user-modal .table {
+            --bs-table-bg: #161b22;
+            --bs-table-color: #f8fafc;
+            --bs-table-border-color: #46505c;
+        }
+        html.dark-mode .profile-user-modal .btn-close,
+        body.dark-mode .profile-user-modal .btn-close {
+            filter: invert(1) grayscale(1);
         }
     </style>
 @endsection

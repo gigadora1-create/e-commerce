@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\HrEmployeeSyncService;
 use Illuminate\Http\Request;
 use App\Models\User;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -15,18 +18,35 @@ class ProfileController extends Controller
 
     public function index(Request $request)
     {
-        $search = $request->input('search');
-
-        $query = User::query();
-
-        if (!empty($search)) {
-            $query->where('name', 'LIKE', '%' . $search . '%')
-                  ->orWhere('email', 'LIKE', '%' . $search . '%');
-        }
-
-        $profiles = $query->orderBy('created_at', 'DESC')->paginate(10);
+        // DataTables receives the full, small user directory so its filter can
+        // search every user instead of only the current server-side page.
+        $profiles = User::query()
+            ->orderBy('name')
+            ->get();
 
         return view('profile.index', compact('profiles'));
+    }
+
+    public function syncHr(HrEmployeeSyncService $syncService)
+    {
+        try {
+            $result = $syncService->sync();
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return response()->json([
+                'message' => 'No se pudieron sincronizar los usuarios desde Recursos Humanos.',
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => sprintf(
+                'Sincronización completada. Nuevos: %d, actualizados: %d, omitidos: %d.',
+                $result['created'],
+                $result['updated'],
+                $result['skipped'],
+            ),
+        ]);
     }
 
     public function store(Request $request)
@@ -34,22 +54,29 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
             'address' => 'nullable|string|max:255',
             'telephone' => 'nullable|string|max:20',
-            'user_type' => 'required|in:Administrador,Usuario',
+            'position' => 'nullable|string|max:255',
+            'process' => 'nullable|string|max:255',
+            'regional' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'address' => $validated['address'],
-            'telephone' => $validated['telephone'],
-            'password' => bcrypt($validated['password']),
-            'user_type' => $validated['user_type'],
+            'address' => $validated['address'] ?? '',
+            'telephone' => $validated['telephone'] ?? '',
+            'position' => $validated['position'] ?? null,
+            'process' => $validated['process'] ?? null,
+            'regional' => $validated['regional'] ?? null,
+            'is_active' => $request->boolean('is_active', true),
+            // Kept only for legacy database compatibility; permissions use roles.
+            'user_type' => 'Usuario',
+            'password' => Hash::make(Str::password(40)),
         ]);
 
-        return response()->json(['message' => 'Usuario agregado exitosamente'], 200);
+        return response()->json(['message' => 'Usuario agregado con contraseña inicial autogenerada'], 200);
     }
 
     public function show($id)
@@ -62,7 +89,12 @@ class ProfileController extends Controller
             'email' => $user->email,
             'telephone' => $user->telephone,
             'address' => $user->address,
-            'user_type' => $user->user_type,
+            'hr_employee_id' => $user->hr_employee_id,
+            'position' => $user->position,
+            'process' => $user->process,
+            'regional' => $user->regional,
+            'is_active' => $user->is_active,
+            'synced_from_hr_at' => optional($user->synced_from_hr_at)->toDateTimeString(),
         ], 200);
     }
 
@@ -76,16 +108,22 @@ class ProfileController extends Controller
             'password' => 'nullable|string|min:8',
             'address' => 'nullable|string|max:255',
             'telephone' => 'nullable|string|max:20',
-            'user_type' => 'required|in:Administrador,Usuario',
+            'position' => 'nullable|string|max:255',
+            'process' => 'nullable|string|max:255',
+            'regional' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'address' => $validated['address'],
-            'telephone' => $validated['telephone'],
-            'user_type' => $validated['user_type'],
-            'password' => $validated['password'] ? bcrypt($validated['password']) : $user->password,
+            'address' => $validated['address'] ?? '',
+            'telephone' => $validated['telephone'] ?? '',
+            'position' => $validated['position'] ?? null,
+            'process' => $validated['process'] ?? null,
+            'regional' => $validated['regional'] ?? null,
+            'is_active' => $request->boolean('is_active'),
+            'password' => $validated['password'] ? Hash::make($validated['password']) : $user->password,
         ]);
 
         return response()->json(['message' => 'Usuario actualizado exitosamente'], 200);

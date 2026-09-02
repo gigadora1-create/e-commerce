@@ -233,6 +233,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['super.admin'])->group(function () {
         Route::resource('permissions', PermissionController::class);
         Route::resource('roles', RoleController::class);
+        Route::post('profiles/sync-hr', [ProfileController::class, 'syncHr'])->name('profiles.sync-hr');
         Route::resource('profiles', ProfileController::class);
         Route::resource('admin', AdminController::class);
         Route::get('/role-permissions', [RolePermissionController::class, 'index'])->name('role_permissions.index');

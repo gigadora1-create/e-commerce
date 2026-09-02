@@ -28,8 +28,13 @@ class User extends Authenticatable
         'telephone',
         'password',
         'user_type',
-        
-        
+        'hr_employee_id',
+        'hr_preferred_email',
+        'position',
+        'process',
+        'regional',
+        'is_active',
+        'synced_from_hr_at',
     ];
     public function sendPasswordResetNotification($token)
     {
@@ -53,6 +58,8 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_active' => 'boolean',
+        'synced_from_hr_at' => 'datetime',
     ];
 
     public function isWarehouseOnly(): bool

@@ -9,6 +9,14 @@
         --sup-soft: #f3f4f6;
         --sup-input: #ffffff;
         --sup-accent: #bb0000;
+        --sup-input-border: #94a3b8;
+        --sup-control-hover: #f8fafc;
+        --sup-check-bg: #ffffff;
+        --sup-check-border: #64748b;
+        --sup-check-active: #bb0000;
+        --sup-check-active-surface: #fff1f2;
+        --sup-check-active-text: #8f0000;
+        --sup-focus-ring: rgba(187, 0, 0, 0.25);
         color: var(--sup-text);
     }
 
@@ -16,13 +24,21 @@
     html.dark-mode .supplies-themed-modal,
     .dark-mode .supplies-shell,
     .dark-mode .supplies-themed-modal {
-        --sup-bg: #18181b;
-        --sup-card: #232326;
-        --sup-border: #3a3a3f;
-        --sup-text: #f3f4f6;
-        --sup-muted: #cbd5e1;
-        --sup-soft: #111214;
-        --sup-input: #16181d;
+        --sup-bg: #101216;
+        --sup-card: #181b20;
+        --sup-border: #3d4652;
+        --sup-text: #f8fafc;
+        --sup-muted: #b9c4d0;
+        --sup-soft: #222831;
+        --sup-input: #12171e;
+        --sup-input-border: #64748b;
+        --sup-control-hover: #242b35;
+        --sup-check-bg: #0b1017;
+        --sup-check-border: #94a3b8;
+        --sup-check-active: #ff5c5c;
+        --sup-check-active-surface: #3a171b;
+        --sup-check-active-text: #fecaca;
+        --sup-focus-ring: rgba(255, 92, 92, 0.34);
     }
 
     .supplies-shell,
@@ -159,13 +175,184 @@
     }
 
     .supplies-shell .form-check-input:checked {
-        background-color: var(--sup-accent);
-        border-color: var(--sup-accent);
+        background-color: var(--sup-check-active);
+        border-color: var(--sup-check-active);
     }
 
     .supplies-themed-modal .form-check-input:checked {
-        background-color: var(--sup-accent);
-        border-color: var(--sup-accent);
+        background-color: var(--sup-check-active);
+        border-color: var(--sup-check-active);
+    }
+
+    /* Selection controls need their own states: Bootstrap's defaults lose
+       contrast in the dark modal surface. */
+    .supplies-shell .form-check,
+    .supplies-themed-modal .form-check {
+        min-height: 2.7rem;
+        margin: 0;
+        padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+        border: 1px solid var(--sup-border);
+        border-radius: 0.65rem;
+        background: var(--sup-soft);
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .supplies-shell .form-check:hover,
+    .supplies-themed-modal .form-check:hover {
+        background: var(--sup-control-hover);
+        border-color: var(--sup-input-border);
+    }
+
+    .supplies-shell .form-check-input,
+    .supplies-themed-modal .form-check-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 1.2rem;
+        height: 1.2rem;
+        margin-top: 0.05rem;
+        margin-left: -1.55rem;
+        background-color: var(--sup-check-bg);
+        border: 2px solid var(--sup-check-border);
+        box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+        cursor: pointer;
+    }
+
+    .supplies-shell .form-check-input[type="checkbox"],
+    .supplies-themed-modal .form-check-input[type="checkbox"] {
+        border-radius: 0.28rem;
+    }
+
+    .supplies-shell .form-check-input[type="radio"],
+    .supplies-themed-modal .form-check-input[type="radio"] {
+        border-radius: 50%;
+    }
+
+    .supplies-shell .form-check-input[type="checkbox"]:checked,
+    .supplies-themed-modal .form-check-input[type="checkbox"]:checked {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='m3 8 3 3 7-7'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 0.9rem 0.9rem;
+    }
+
+    .supplies-shell .form-check-input[type="radio"]:checked,
+    .supplies-themed-modal .form-check-input[type="radio"]:checked {
+        background-image: radial-gradient(circle, #fff 0 36%, transparent 40%);
+    }
+
+    .supplies-shell .form-check-input:focus-visible,
+    .supplies-themed-modal .form-check-input:focus-visible {
+        outline: 0;
+        border-color: var(--sup-check-active);
+        box-shadow: 0 0 0 0.22rem var(--sup-focus-ring);
+    }
+
+    .supplies-shell .form-check-input:checked + .form-check-label,
+    .supplies-themed-modal .form-check-input:checked + .form-check-label {
+        color: var(--sup-check-active-text) !important;
+        font-weight: 700;
+    }
+
+    .supplies-shell .form-check:has(.form-check-input:checked),
+    .supplies-themed-modal .form-check:has(.form-check-input:checked) {
+        background: var(--sup-check-active-surface);
+        border-color: var(--sup-check-active);
+        box-shadow: 0 0 0 1px var(--sup-focus-ring);
+    }
+
+    .supplies-shell .form-check-input:disabled,
+    .supplies-themed-modal .form-check-input:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+    }
+
+    .supplies-shell .form-check:has(.form-check-input:disabled),
+    .supplies-themed-modal .form-check:has(.form-check-input:disabled) {
+        opacity: 0.62;
+        cursor: not-allowed;
+    }
+
+    .supplies-shell .form-select option,
+    .supplies-themed-modal .form-select option {
+        background: var(--sup-input);
+        color: var(--sup-text);
+    }
+
+    .supplies-shell .bg-light,
+    .supplies-themed-modal .bg-light {
+        background-color: var(--sup-soft) !important;
+        color: var(--sup-text) !important;
+    }
+
+    /* The application-wide dark theme is loaded after this partial and uses
+       !important. Keep the supply controls isolated and visibly stateful. */
+    html.dark-mode .supplies-shell,
+    html.dark-mode .supplies-themed-modal,
+    body.dark-mode .supplies-shell,
+    body.dark-mode .supplies-themed-modal {
+        --sup-bg: #101216;
+        --sup-card: #181b20;
+        --sup-border: #3d4652;
+        --sup-text: #f8fafc;
+        --sup-muted: #b9c4d0;
+        --sup-soft: #222831;
+        --sup-input: #12171e;
+        --sup-input-border: #64748b;
+        --sup-control-hover: #242b35;
+        --sup-check-bg: #0b1017;
+        --sup-check-border: #94a3b8;
+        --sup-check-active: #ff5c5c;
+        --sup-check-active-surface: #3a171b;
+        --sup-check-active-text: #fecaca;
+        --sup-focus-ring: rgba(255, 92, 92, 0.34);
+    }
+
+    html.dark-mode .supplies-shell,
+    body.dark-mode .supplies-shell {
+        background-color: var(--sup-bg);
+    }
+
+    html.dark-mode .supplies-shell .form-check,
+    html.dark-mode .supplies-themed-modal .form-check,
+    body.dark-mode .supplies-shell .form-check,
+    body.dark-mode .supplies-themed-modal .form-check {
+        background-color: var(--sup-soft) !important;
+        border-color: var(--sup-border) !important;
+    }
+
+    html.dark-mode .supplies-shell .form-check-input,
+    html.dark-mode .supplies-themed-modal .form-check-input,
+    body.dark-mode .supplies-shell .form-check-input,
+    body.dark-mode .supplies-themed-modal .form-check-input {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: var(--sup-check-bg) !important;
+        border-color: var(--sup-check-border) !important;
+        box-shadow: inset 0 0 0 1px rgba(248, 250, 252, 0.12) !important;
+    }
+
+    html.dark-mode .supplies-shell .form-check-input:checked,
+    html.dark-mode .supplies-themed-modal .form-check-input:checked,
+    body.dark-mode .supplies-shell .form-check-input:checked,
+    body.dark-mode .supplies-themed-modal .form-check-input:checked {
+        background-color: var(--sup-check-active) !important;
+        border-color: var(--sup-check-active) !important;
+        box-shadow: 0 0 0 0.22rem var(--sup-focus-ring) !important;
+    }
+
+    html.dark-mode .supplies-shell .form-check:has(.form-check-input:checked),
+    html.dark-mode .supplies-themed-modal .form-check:has(.form-check-input:checked),
+    body.dark-mode .supplies-shell .form-check:has(.form-check-input:checked),
+    body.dark-mode .supplies-themed-modal .form-check:has(.form-check-input:checked) {
+        background-color: var(--sup-check-active-surface) !important;
+        border-color: var(--sup-check-active) !important;
+    }
+
+    html.dark-mode .supplies-shell .form-check-input:checked + .form-check-label,
+    html.dark-mode .supplies-themed-modal .form-check-input:checked + .form-check-label,
+    body.dark-mode .supplies-shell .form-check-input:checked + .form-check-label,
+    body.dark-mode .supplies-themed-modal .form-check-input:checked + .form-check-label {
+        color: var(--sup-check-active-text) !important;
     }
 
     html.dark-mode .supplies-themed-modal .modal-content,

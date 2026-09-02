@@ -36,6 +36,12 @@ return [
         'timeout' => env('REQ_SUPPLY_TIMEOUT', 10),
     ],
 
+    'hr_employees' => [
+        'url' => env('HR_EMPLOYEES_URL'),
+        'token' => env('HR_EMPLOYEES_TOKEN'),
+        'timeout' => env('HR_EMPLOYEES_TIMEOUT', 20),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
