@@ -1,0 +1,5 @@
+# Migrations explicitly authorized for production deployments.
+# Add a path here whenever a new production-safe migration is introduced.
+database/migrations/2026_09_21_000001_add_user_preferences_to_users_table.php
+database/migrations/2026_09_21_000002_create_notifications_table.php
+database/migrations/2026_09_21_000003_create_system_settings_table.php

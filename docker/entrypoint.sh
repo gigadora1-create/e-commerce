@@ -11,7 +11,18 @@ if [ ! -L public/storage ]; then
     php artisan storage:link >/dev/null 2>&1 || true
 fi
 
-if [ -n "${DEPLOY_MIGRATION_PATHS:-}" ]; then
+if [ -f "docker/production-migrations.txt" ]; then
+    # Keep the approved migration list under version control. Running every
+    # pending migration is unsafe because this application has legacy migrations.
+    while IFS= read -r migration_path || [ -n "$migration_path" ]; do
+        case "$migration_path" in
+            ''|'#'*) continue ;;
+        esac
+
+        php artisan migrate --path="$migration_path" --force
+    done < docker/production-migrations.txt
+elif [ -n "${DEPLOY_MIGRATION_PATHS:-}" ]; then
+    # Backward compatibility for deployments created before the manifest.
     printf '%s' "$DEPLOY_MIGRATION_PATHS" | tr ',' '\n' | while IFS= read -r migration_path; do
         [ -n "$migration_path" ] || continue
         php artisan migrate --path="$migration_path" --force
