@@ -28,6 +28,7 @@ use App\Http\Controllers\SupplyIssueController;
 use App\Http\Controllers\SupplyClientController;
 use App\Http\Controllers\SupplyPurchaseRecipientController;
 use App\Http\Controllers\UserPreferenceController;
+use App\Http\Controllers\SupplyNotificationController;
 
 Route::redirect('/', '/login');
 Route::get('/favicon.ico', static fn () => response()->noContent());
@@ -61,7 +62,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/entries-data', [DashboardController::class, 'getEntriesData'])->name('dashboard.entries.data');
     Route::get('/dashboard/outputs-data', [DashboardController::class, 'getOutputsData'])->name('dashboard.outputs.data');
 
-    Route::prefix('supplies')->name('supplies.')->group(function () {
+      Route::prefix('supplies')->name('supplies.')->group(function () {
+          Route::get('/notifications', [SupplyNotificationController::class, 'index'])
+              ->middleware('can:supplies.request')
+              ->name('notifications.index');
+          Route::patch('/notifications/read-all', [SupplyNotificationController::class, 'markAllAsRead'])
+              ->middleware('can:supplies.request')
+              ->name('notifications.read-all');
+          Route::patch('/notifications/{notification}/read', [SupplyNotificationController::class, 'markAsRead'])
+              ->middleware('can:supplies.request')
+              ->name('notifications.read');
         Route::get('/', [SupplyController::class, 'index'])
             ->middleware('can:supplies.admin')
             ->name('index');
@@ -238,6 +248,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('profiles/preferences', [UserPreferenceController::class, 'index'])->name('profiles.preferences.index');
         Route::put('profiles/{user}/preferences', [UserPreferenceController::class, 'updateUser'])->name('profiles.preferences.update');
         Route::put('profiles/preferences/two-factor', [UserPreferenceController::class, 'updateTwoFactorForAll'])->name('profiles.preferences.two-factor.update');
+        Route::put('profiles/preferences/supply-issue-schedule', [UserPreferenceController::class, 'updateSupplyIssueScheduleRestriction'])->name('profiles.preferences.supply-issue-schedule.update');
         Route::resource('permissions', PermissionController::class);
         Route::resource('roles', RoleController::class);
         Route::post('profiles/sync-hr', [ProfileController::class, 'syncHr'])->name('profiles.sync-hr');

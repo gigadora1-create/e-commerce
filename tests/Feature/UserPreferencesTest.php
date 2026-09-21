@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\SystemSetting;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Config;
 use Spatie\Permission\Models\Role;
@@ -68,6 +69,19 @@ class UserPreferencesTest extends TestCase
         $this->assertFalse($target->two_factor_enabled);
     }
 
+    public function test_super_admin_can_view_supply_issue_schedule_preference(): void
+    {
+        $role = Role::findOrCreate('SUPERADMIN', 'web');
+        $admin = User::factory()->create();
+        $admin->syncRoles([$role]);
+
+        $this->actingAs($admin)
+            ->withSession(['two_factor_verified' => true])
+            ->get(route('profiles.preferences.index'))
+            ->assertOk()
+            ->assertSee('Envio restringido de Proveeduria');
+    }
+
     public function test_regular_user_cannot_access_preferences_administration(): void
     {
         $user = User::factory()->create();
@@ -103,6 +117,26 @@ class UserPreferencesTest extends TestCase
             $originalValues->each(function ($enabled, $id): void {
                 User::query()->whereKey($id)->update(['two_factor_enabled' => $enabled]);
             });
+        }
+    }
+
+    public function test_super_admin_can_disable_supply_issue_schedule_restriction(): void
+    {
+        $role = Role::findOrCreate('SUPERADMIN', 'web');
+        $admin = User::factory()->create();
+        $admin->syncRoles([$role]);
+
+        try {
+            $this->actingAs($admin)
+                ->withSession(['two_factor_verified' => true])
+                ->put(route('profiles.preferences.supply-issue-schedule.update'), [
+                    'supply_issue_schedule_restriction_enabled' => false,
+                ])
+                ->assertRedirect();
+
+            $this->assertFalse(SystemSetting::boolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, true));
+        } finally {
+            SystemSetting::forgetCached(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION);
         }
     }
 }

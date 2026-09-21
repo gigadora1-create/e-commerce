@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\SystemSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,10 @@ class UserPreferenceController extends Controller
                 ->orderBy('name')
                 ->get(),
             'twoFactorGloballyEnabled' => (bool) config('auth.two_factor_enabled', true),
+            'supplyIssueScheduleRestrictionEnabled' => SystemSetting::boolean(
+                SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION,
+                true
+            ),
         ]);
     }
 
@@ -89,6 +94,24 @@ class UserPreferenceController extends Controller
             'icon' => 'success',
             'title' => 'Actualizacion masiva completada',
             'text' => sprintf('Doble validacion %s para %d usuario(s).', $enabled ? 'activada' : 'desactivada', $updated),
+        ]);
+    }
+
+    public function updateSupplyIssueScheduleRestriction(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'supply_issue_schedule_restriction_enabled' => ['required', 'boolean'],
+        ]);
+
+        $enabled = $request->boolean('supply_issue_schedule_restriction_enabled');
+        SystemSetting::putBoolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, $enabled);
+
+        return back()->with('swal_alert', [
+            'icon' => 'success',
+            'title' => 'Configuracion de envios actualizada',
+            'text' => $enabled
+                ? 'Las solicitudes de salida volveran a restringirse a jueves y viernes para los solicitantes.'
+                : 'Las solicitudes de salida podran enviarse cualquier dia para los solicitantes.',
         ]);
     }
 }

@@ -37,7 +37,10 @@ class RestrictSupplyRequesterOnlyAccess
 
         $canAccessSupplyRoute = $routeName && (
             ($isSupplyAdminOnly && Str::startsWith($routeName, 'supplies.'))
-            || ($isSupplyRequesterOnly && Str::startsWith($routeName, 'supplies.issues.'))
+            || ($isSupplyRequesterOnly && (
+                Str::startsWith($routeName, 'supplies.issues.')
+                || Str::startsWith($routeName, 'supplies.notifications.')
+            ))
         );
 
         if ($canAccessSupplyRoute || ($routeName && in_array($routeName, $allowedRoutes, true))) {

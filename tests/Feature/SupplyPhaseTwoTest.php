@@ -7,6 +7,7 @@ use App\Models\SupplyReqCaseSync;
 use App\Models\SupplyClient;
 use App\Models\SupplyProduct;
 use App\Models\SupplyRequest;
+use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -32,11 +33,13 @@ class SupplyPhaseTwoTest extends TestCase
         Permission::findOrCreate('supplies.request', 'web');
         Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin', 'supplies.request']);
         Role::findOrCreate('PROVEEDURIA_USUARIO', 'web')->syncPermissions(['supplies.request']);
+        SystemSetting::putBoolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, true);
     }
 
     protected function tearDown(): void
     {
         CarbonImmutable::setTestNow();
+        SystemSetting::forgetCached(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION);
 
         parent::tearDown();
     }
@@ -414,6 +417,31 @@ class SupplyPhaseTwoTest extends TestCase
         ])
             ->assertRedirect(route('supplies.issues.index'))
             ->assertSessionHas('error', 'Solo se puede enviar proveeduria los dias jueves y viernes.');
+    }
+
+    public function test_request_user_can_create_issue_request_on_wednesday_when_schedule_restriction_is_disabled(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-12 10:00:00', 'America/Bogota'));
+        SystemSetting::putBoolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, false);
+
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $product = SupplyProduct::query()->firstOrFail();
+        $client = SupplyClient::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 4, 'reserved_stock' => 0]);
+
+        $this->actingAs($requester)
+            ->post(route('supplies.issues.store'), [
+                'supply_client_id' => $client->id,
+                'product_id' => [$product->id],
+                'requested_quantity' => [1],
+            ])
+            ->assertRedirect(route('supplies.issues.index'));
+
+        $this->assertDatabaseHas('supply_issue_requests', [
+            'requested_by_user_id' => $requester->id,
+            'status' => SupplyIssueRequest::STATUS_PREPARING,
+        ]);
     }
 
     public function test_request_user_can_create_issue_request_on_thursday_august_13_2026(): void

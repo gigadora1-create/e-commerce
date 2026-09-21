@@ -6,7 +6,10 @@ use App\Models\SupplyClient;
 use App\Models\SupplyIssueRequest;
 use App\Models\SupplyProduct;
 use App\Models\SupplyStockMovement;
+use App\Models\SystemSetting;
 use App\Services\Supply\SupplyIssueService;
+use App\Services\Supply\SupplyIssueNotificationService;
+use App\Notifications\SupplyIssueNotification;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -17,7 +20,8 @@ use Illuminate\Support\Facades\DB;
 class SupplyIssueController extends Controller
 {
     public function __construct(
-        private readonly SupplyIssueService $issueService
+        private readonly SupplyIssueService $issueService,
+        private readonly SupplyIssueNotificationService $notificationService
     ) {}
 
     public function index(Request $request)
@@ -117,7 +121,8 @@ class SupplyIssueController extends Controller
             'request_notes' => ['nullable', 'string'],
         ]);
 
-        $this->issueService->createRequest($request);
+        $issueRequest = $this->issueService->createRequest($request);
+        $this->notificationService->notifyAdminsOfNewRequest($issueRequest);
 
         return redirect()
             ->route('supplies.issues.index')
@@ -179,6 +184,8 @@ class SupplyIssueController extends Controller
     {
         $this->authorize('viewIssueRequest', $issueRequest);
 
+        $this->notificationService->markIssueNotificationsAsRead($request->user(), $issueRequest);
+
         $issueRequest->load([
             'items.product',
             'requestedBy:id,name',
@@ -197,7 +204,8 @@ class SupplyIssueController extends Controller
     {
         $this->authorize('markReady', $issueRequest);
 
-        $this->issueService->markReady($request, $issueRequest);
+        $issueRequest = $this->issueService->markReady($request, $issueRequest);
+        $this->notificationService->notifyRequester($issueRequest, SupplyIssueNotification::EVENT_READY);
 
         return redirect()
             ->route('supplies.issues.show', $issueRequest)
@@ -241,6 +249,12 @@ class SupplyIssueController extends Controller
         $validator->validate();
 
         $issueRequest = $this->issueService->close($request, $issueRequest);
+        $this->notificationService->notifyRequester(
+            $issueRequest,
+            $issueRequest->status === SupplyIssueRequest::STATUS_CLOSED
+                ? SupplyIssueNotification::EVENT_CLOSED
+                : SupplyIssueNotification::EVENT_PENDING_SUPPORT
+        );
 
         return redirect()
             ->route('supplies.issues.show', $issueRequest)
@@ -257,7 +271,8 @@ class SupplyIssueController extends Controller
             'admin_notes' => ['nullable', 'string'],
         ]);
 
-        $this->issueService->confirmSupport($request, $issueRequest);
+        $issueRequest = $this->issueService->confirmSupport($request, $issueRequest);
+        $this->notificationService->notifyRequester($issueRequest, SupplyIssueNotification::EVENT_CLOSED);
 
         return redirect()
             ->route('supplies.issues.show', $issueRequest)
@@ -268,7 +283,8 @@ class SupplyIssueController extends Controller
     {
         $this->authorize('reject', $issueRequest);
 
-        $this->issueService->reject($request, $issueRequest);
+        $issueRequest = $this->issueService->reject($request, $issueRequest);
+        $this->notificationService->notifyRequester($issueRequest, SupplyIssueNotification::EVENT_REJECTED);
 
         return redirect()
             ->route('supplies.issues.show', $issueRequest)
@@ -383,6 +399,10 @@ class SupplyIssueController extends Controller
 
     private function canRequesterCreateIssueToday(): bool
     {
+        if (!SystemSetting::boolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, true)) {
+            return true;
+        }
+
         return in_array(CarbonImmutable::now('America/Bogota')->dayOfWeekIso, [4, 5], true);
     }
 

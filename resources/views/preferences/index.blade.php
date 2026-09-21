@@ -36,6 +36,35 @@
         </div>
     @endunless
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center justify-content-between">
+            <div class="mb-3 mb-lg-0">
+                <h2 class="h5 mb-1"><i class="fas fa-calendar-alt text-primary mr-2"></i>Envio restringido de Proveeduria</h2>
+                <p class="mb-0 text-muted">
+                    @if($supplyIssueScheduleRestrictionEnabled)
+                        Los solicitantes solo pueden enviar solicitudes de salida los dias jueves y viernes.
+                    @else
+                        Los solicitantes pueden enviar solicitudes de salida cualquier dia.
+                    @endif
+                </p>
+            </div>
+            <form method="POST" action="{{ route('profiles.preferences.supply-issue-schedule.update') }}" data-swal-confirm>
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="supply_issue_schedule_restriction_enabled" value="{{ $supplyIssueScheduleRestrictionEnabled ? '0' : '1' }}">
+                @if($supplyIssueScheduleRestrictionEnabled)
+                    <button type="submit" class="btn btn-outline-danger" data-swal-title="Desactivar envio restringido" data-swal-text="Los solicitantes de Proveeduria podran crear solicitudes cualquier dia." data-swal-confirm-text="Si, desactivar">
+                        <i class="fas fa-unlock mr-1"></i> Desactivar restriccion
+                    </button>
+                @else
+                    <button type="submit" class="btn btn-success" data-swal-title="Activar envio restringido" data-swal-text="Los solicitantes de Proveeduria solo podran crear solicitudes los jueves y viernes." data-swal-confirm-text="Si, activar">
+                        <i class="fas fa-lock mr-1"></i> Activar restriccion
+                    </button>
+                @endif
+            </form>
+        </div>
+    </div>
+
     <div class="card shadow-sm">
         <div class="card-body border-bottom">
             <div class="d-flex flex-column flex-lg-row align-items-lg-end preferences-toolbar">

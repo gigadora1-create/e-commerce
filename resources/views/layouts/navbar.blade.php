@@ -42,7 +42,8 @@
 
   /* Botones redondos mejorados (toggle sidebar y modo oscuro) */
   #sidebarToggleTop,
-  #toggle-night-mode {
+  #toggle-night-mode,
+  #supplyNotificationButton {
     width: 40px;
     height: 40px;
     display: inline-flex;
@@ -60,7 +61,8 @@
 
   /* Efecto ripple al hacer clic */
   #sidebarToggleTop::before,
-  #toggle-night-mode::before {
+  #toggle-night-mode::before,
+  #supplyNotificationButton::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -71,14 +73,16 @@
   }
 
   #sidebarToggleTop:active::before,
-  #toggle-night-mode:active::before {
+  #toggle-night-mode:active::before,
+  #supplyNotificationButton:active::before {
     opacity: 0.3;
     transform: scale(1);
     transition: transform 0.5s, opacity 0.1s;
   }
 
   #sidebarToggleTop i,
-  #toggle-night-mode i {
+  #toggle-night-mode i,
+  #supplyNotificationButton i {
     font-size: 1.1rem;
     position: relative;
     z-index: 1;
@@ -86,21 +90,43 @@
   }
 
   #sidebarToggleTop:hover,
-  #toggle-night-mode:hover {
+  #toggle-night-mode:hover,
+  #supplyNotificationButton:hover {
     background: var(--surface-hover);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
   }
 
   #sidebarToggleTop:hover i,
-  #toggle-night-mode:hover i {
+  #toggle-night-mode:hover i,
+  #supplyNotificationButton:hover i {
     transform: scale(1.1);
   }
 
   #sidebarToggleTop:focus,
-  #toggle-night-mode:focus {
+  #toggle-night-mode:focus,
+  #supplyNotificationButton:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(46, 89, 217, 0.1);
+  }
+
+  /* The unread counter lives outside the circular button and must not be clipped. */
+  #supplyNotificationButton {
+    width: 44px;
+    height: 44px;
+    overflow: visible;
+    background: rgba(187, 0, 0, 0.09);
+    border-color: rgba(187, 0, 0, 0.3);
+    color: var(--primary);
+  }
+
+  #supplyNotificationButton i {
+    font-size: 1.3rem;
+  }
+
+  #supplyNotificationButton:hover {
+    background: rgba(187, 0, 0, 0.16);
+    border-color: var(--primary);
   }
 
   /* Animación del icono de modo */
@@ -332,15 +358,29 @@
 
   /* Modo oscuro (estilos específicos del navbar) */
   body.dark-mode #sidebarToggleTop,
-  body.dark-mode #toggle-night-mode {
+  body.dark-mode #toggle-night-mode,
+  body.dark-mode #supplyNotificationButton {
     background: var(--surface);
     color: var(--text-primary);
     border-color: var(--border);
   }
 
   body.dark-mode #sidebarToggleTop:hover,
-  body.dark-mode #toggle-night-mode:hover {
+  body.dark-mode #toggle-night-mode:hover,
+  body.dark-mode #supplyNotificationButton:hover {
     background: var(--surface-hover);
+  }
+
+  body.dark-mode #supplyNotificationButton {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  body.dark-mode #supplyNotificationButton:hover {
+    background: rgba(187, 0, 0, 0.28);
+    border-color: #ef5350;
+    color: #ffffff;
   }
 
   body.dark-mode .navbar-actions .nav-link.dropdown-toggle {
@@ -368,6 +408,141 @@
     color: #ffffff;
   }
 
+  .notification-badge {
+    position: absolute;
+    top: -0.45rem;
+    right: -0.45rem;
+    z-index: 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    padding: 0 0.3rem;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .notification-menu {
+    width: min(23rem, calc(100vw - 1.5rem));
+    min-width: min(23rem, calc(100vw - 1.5rem));
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .notification-menu__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+  }
+
+  .notification-menu__header strong {
+    font-size: 0.9rem;
+  }
+
+  .notification-menu__mark-all {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .notification-menu__list {
+    max-height: 22rem;
+    overflow-y: auto;
+  }
+
+  .notification-item {
+    display: block;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .notification-item:hover,
+  .notification-item:focus {
+    background: var(--surface-hover);
+    color: var(--text-primary);
+  }
+
+  .notification-item--unread {
+    background: rgba(187, 0, 0, 0.055);
+  }
+
+  .notification-item__content {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .notification-item__icon {
+    display: inline-flex;
+    flex: 0 0 2rem;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  .notification-item__icon--success { color: #198754; }
+  .notification-item__icon--warning { color: #b7791f; }
+  .notification-item__icon--danger { color: #c53030; }
+  .notification-item__icon--info { color: #2575b9; }
+
+  .notification-item__title,
+  .notification-item__message,
+  .notification-item__time {
+    display: block;
+  }
+
+  .notification-item__title {
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .notification-item__message {
+    margin-top: 0.15rem;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .notification-item__time {
+    margin-top: 0.3rem;
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+  }
+
+  .notification-menu__empty {
+    padding: 2rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+
+  body.dark-mode .notification-badge {
+    border-color: #1a1a1a;
+  }
+
+  body.dark-mode .notification-item--unread {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
   /* Responsive */
   @media (max-width: 768px) {
     .enhanced-navbar .left-group {
@@ -389,6 +564,24 @@
 
 
   <ul class="navbar-nav ms-auto navbar-actions">
+    @if(auth()->user()->can('supplies.request') || auth()->user()->can('supplies.admin'))
+      <li class="nav-item dropdown no-arrow">
+        <button id="supplyNotificationButton" class="btn btn-link" type="button" data-bs-toggle="dropdown"
+          data-bs-auto-close="outside" aria-expanded="false" aria-label="Notificaciones de Proveeduria">
+          <i class="fas fa-bell"></i>
+          <span id="supplyNotificationBadge" class="notification-badge" hidden>0</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end notification-menu shadow animated--grow-in" aria-labelledby="supplyNotificationButton">
+          <div class="notification-menu__header">
+            <strong>Notificaciones de Proveeduria</strong>
+            <button id="supplyNotificationsMarkAll" class="notification-menu__mark-all" type="button">Marcar leidas</button>
+          </div>
+          <div id="supplyNotificationsList" class="notification-menu__list" aria-live="polite">
+            <div class="notification-menu__empty">Cargando notificaciones...</div>
+          </div>
+        </div>
+      </li>
+    @endif
     <li class="nav-item">
       <button id="toggle-night-mode" class="btn btn-link" type="button" title="Cambiar modo" aria-label="Cambiar modo visual">
         <i id="mode-icon" class="fas fa-sun"></i>
@@ -437,3 +630,115 @@
     setTimeout(() => this.classList.remove('switching'), 600);
   });
 </script>
+
+@if(auth()->user()->can('supplies.request') || auth()->user()->can('supplies.admin'))
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const button = document.getElementById('supplyNotificationButton');
+    const badge = document.getElementById('supplyNotificationBadge');
+    const list = document.getElementById('supplyNotificationsList');
+    const markAll = document.getElementById('supplyNotificationsMarkAll');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const endpoint = @json(route('supplies.notifications.index'));
+    const markAllEndpoint = @json(route('supplies.notifications.read-all'));
+    let unreadCount = null;
+
+    if (!button || !badge || !list || !markAll) return;
+
+    const escapeHtml = function (value) {
+      const node = document.createElement('span');
+      node.textContent = value || '';
+      return node.innerHTML;
+    };
+
+    const updateBadge = function (count) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 99 ? '99+' : String(count);
+      button.setAttribute('aria-label', count > 0
+        ? `Notificaciones de Proveeduria: ${count} sin leer`
+        : 'Notificaciones de Proveeduria');
+    };
+
+    const currentAppUrl = function (value) {
+      try {
+        const url = new URL(value, window.location.origin);
+        return `${url.pathname}${url.search}${url.hash}`;
+      } catch (error) {
+        return value || '/supplies/issues';
+      }
+    };
+
+    const render = function (notifications) {
+      if (!notifications.length) {
+        list.innerHTML = '<div class="notification-menu__empty"><i class="far fa-bell d-block mb-2"></i>No tienes notificaciones de Proveeduria.</div>';
+        return;
+      }
+
+      list.innerHTML = notifications.map(function (notification) {
+        return `<a class="notification-item ${notification.read ? '' : 'notification-item--unread'}" href="${escapeHtml(currentAppUrl(notification.url))}" data-notification-id="${escapeHtml(notification.id)}">
+          <span class="notification-item__content">
+            <span class="notification-item__icon notification-item__icon--${escapeHtml(notification.level)}"><i class="fas ${escapeHtml(notification.icon)}"></i></span>
+            <span>
+              <span class="notification-item__title">${escapeHtml(notification.title)}</span>
+              <span class="notification-item__message">${escapeHtml(notification.message)}</span>
+              <span class="notification-item__time">${escapeHtml(notification.created_at)}</span>
+            </span>
+          </span>
+        </a>`;
+      }).join('');
+    };
+
+    const loadNotifications = async function (announce) {
+      try {
+        const response = await fetch(endpoint, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+        if (!response.ok) throw new Error('No fue posible cargar las notificaciones.');
+
+        const payload = await response.json();
+        if (announce && unreadCount !== null && payload.unread_count > unreadCount && window.AppAlerts) {
+          window.AppAlerts.notify({ icon: 'info', title: 'Nueva alerta de Proveeduria', text: 'Tienes una solicitud o actualización pendiente por revisar.' });
+        }
+        unreadCount = payload.unread_count;
+        updateBadge(payload.unread_count);
+        render(payload.notifications);
+      } catch (error) {
+        list.innerHTML = '<div class="notification-menu__empty">No fue posible cargar las notificaciones.</div>';
+      }
+    };
+
+    list.addEventListener('click', async function (event) {
+      const item = event.target.closest('[data-notification-id]');
+      if (!item) return;
+
+      event.preventDefault();
+      const notificationId = item.dataset.notificationId;
+      try {
+        await fetch(`${endpoint}/${notificationId}/read`, {
+          method: 'PATCH',
+          headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' },
+          credentials: 'same-origin',
+        });
+      } finally {
+        window.location.assign(item.href);
+      }
+    });
+
+    markAll.addEventListener('click', async function () {
+      try {
+        const response = await fetch(markAllEndpoint, {
+          method: 'PATCH',
+          headers: { 'X-CSRF-TOKEN': csrf, Accept: 'application/json' },
+          credentials: 'same-origin',
+        });
+        if (!response.ok) throw new Error('No fue posible marcar las notificaciones.');
+        await loadNotifications(false);
+      } catch (error) {
+        window.AppAlerts?.notify({ icon: 'error', title: 'Error de notificaciones', text: 'No fue posible marcar las alertas como leidas.' });
+      }
+    });
+
+    button.addEventListener('show.bs.dropdown', function () { loadNotifications(false); });
+    loadNotifications(false);
+    window.setInterval(function () { loadNotifications(true); }, 60000);
+  });
+</script>
+@endif
