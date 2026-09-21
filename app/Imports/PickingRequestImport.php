@@ -102,6 +102,7 @@ class PickingRequestImport implements ToCollection, WithHeadingRow
         $bodega = trim($row['bodega'] ?? '');
         $customer = trim($row['cliente'] ?? $this->defaultCustomer ?? '');
         $orderNumber = isset($row['pedido']) ? trim($row['pedido']) : null;
+        $orderNumber = \App\Helpers\StringHelper::repairAccents($orderNumber);
 
         if (empty($sku) || empty($productoExcel) || empty($bodega) || 
             empty($cantidad) || empty($customer)) {

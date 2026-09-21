@@ -19,9 +19,13 @@
   <script>
     (function () {
       // Aplicar tema inmediatamente SOLO a html (body aún no existe)
-      if (localStorage.getItem('dark-mode') === 'enabled') {
-        document.documentElement.classList.add('dark-mode');
-      }
+      const themeMode = @json(auth()->user()?->theme_mode ?? 'system');
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && prefersDark);
+
+      document.documentElement.dataset.themeMode = themeMode;
+      document.documentElement.classList.toggle('dark-mode', isDarkMode);
+      document.documentElement.classList.toggle('light-mode', !isDarkMode);
     })();
   </script>
 
@@ -519,6 +523,16 @@
       border-color: #117a8b !important;
     }
 
+    .dark-mode .swal2-popup {
+      background-color: #1e1e1e;
+      color: #f1f5f9;
+    }
+
+    .dark-mode .swal2-title,
+    .dark-mode .swal2-html-container {
+      color: #f1f5f9;
+    }
+
     /* Footer en modo oscuro */
     .dark-mode .navbar,
     .dark-mode .footer {
@@ -696,6 +710,62 @@
 
   <!-- Otros scripts -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    window.AppAlerts = {
+      notify(alert) {
+        if (!window.Swal || !alert) {
+          return;
+        }
+
+        const icon = alert.icon || 'info';
+        const isSuccess = icon === 'success';
+
+        Swal.fire({
+          icon,
+          title: alert.title || 'Notificacion',
+          text: alert.text || '',
+          toast: alert.toast ?? isSuccess,
+          position: alert.position || (isSuccess ? 'top-end' : 'center'),
+          timer: alert.timer || (isSuccess ? 4500 : undefined),
+          timerProgressBar: isSuccess,
+          showConfirmButton: alert.showConfirmButton ?? !isSuccess,
+          confirmButtonColor: '#bb0000',
+        });
+      },
+    };
+
+    document.addEventListener('submit', (event) => {
+      const form = event.target.closest('form[data-swal-confirm]');
+
+      if (!form || form.dataset.swalConfirmed === 'true' || !window.Swal) {
+        if (form) {
+          delete form.dataset.swalConfirmed;
+        }
+        return;
+      }
+
+      event.preventDefault();
+      const submitter = event.submitter;
+
+      Swal.fire({
+        icon: 'warning',
+        title: submitter?.dataset.swalTitle || 'Confirmar accion',
+        text: submitter?.dataset.swalText || 'Esta accion realizara cambios en el sistema.',
+        showCancelButton: true,
+        confirmButtonText: submitter?.dataset.swalConfirmText || 'Continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#bb0000',
+        cancelButtonColor: '#6c757d',
+        reverseButtons: true,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          form.dataset.swalConfirmed = 'true';
+          form.requestSubmit(submitter);
+        }
+      });
+    });
+  </script>
+  @include('layouts.swal-alerts')
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script src="{{ asset('admin_assets/vendor/chart.js/Chart.min.js') }}"></script>
 
@@ -882,47 +952,59 @@
       const contentWrapper = document.getElementById('content-wrapper');
 
       // Sincronizar body con html (que ya tiene la clase del script inline)
-      if (html.classList.contains('dark-mode')) {
-        body.classList.add('dark-mode');
-        topbar.classList.add('navbar-dark', 'bg-dark');
-        topbar.classList.remove('navbar-light', 'bg-white');
-        modeIcon.classList.remove('fa-sun');
-        modeIcon.classList.add('fa-moon');
-        if (sidebar) sidebar.classList.add('bg-dark');
-        if (contentWrapper) contentWrapper.classList.add('bg-dark');
-      }
+      let savedThemeMode = @json(auth()->user()?->theme_mode ?? 'system');
+
+      const applyTheme = (themeMode) => {
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && prefersDark);
+
+        html.dataset.themeMode = themeMode;
+        html.classList.toggle('dark-mode', isDarkMode);
+        html.classList.toggle('light-mode', !isDarkMode);
+        body.classList.toggle('dark-mode', isDarkMode);
+
+        if (topbar) {
+          topbar.classList.toggle('navbar-dark', isDarkMode);
+          topbar.classList.toggle('bg-dark', isDarkMode);
+          topbar.classList.toggle('navbar-light', !isDarkMode);
+          topbar.classList.toggle('bg-white', !isDarkMode);
+        }
+
+        if (sidebar) sidebar.classList.toggle('bg-dark', isDarkMode);
+        if (contentWrapper) contentWrapper.classList.toggle('bg-dark', isDarkMode);
+        if (modeIcon) modeIcon.className = `fas fa-${isDarkMode ? 'moon' : 'sun'}`;
+        if (toggleButton) toggleButton.title = isDarkMode ? 'Activar modo claro' : 'Activar modo oscuro';
+      };
+
+      applyTheme(savedThemeMode);
 
       if (toggleButton) {
-        toggleButton.addEventListener('click', () => {
-          // Toggle en html y body
-          const isDarkMode = html.classList.toggle('dark-mode');
-          body.classList.toggle('dark-mode', isDarkMode);
+        toggleButton.addEventListener('click', async () => {
+          const nextThemeMode = html.classList.contains('dark-mode') ? 'light' : 'dark';
+          applyTheme(nextThemeMode);
 
-          // Toggle navbar
-          if (topbar) {
-            topbar.classList.toggle('navbar-dark', isDarkMode);
-            topbar.classList.toggle('bg-dark', isDarkMode);
-            topbar.classList.toggle('navbar-light', !isDarkMode);
-            topbar.classList.toggle('bg-white', !isDarkMode);
-          }
+          try {
+            const response = await fetch(@json(route('preferences.update')), {
+              method: 'PUT',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+              },
+              body: JSON.stringify({
+                theme_mode: nextThemeMode,
+                two_factor_enabled: @json((bool) auth()->user()?->two_factor_enabled),
+              }),
+            });
 
-          // Toggle sidebar y content
-          if (sidebar) sidebar.classList.toggle('bg-dark', isDarkMode);
-          if (contentWrapper) contentWrapper.classList.toggle('bg-dark', isDarkMode);
-
-          // Actualizar icono y localStorage
-          if (isDarkMode) {
-            localStorage.setItem('dark-mode', 'enabled');
-            if (modeIcon) {
-              modeIcon.classList.remove('fa-sun');
-              modeIcon.classList.add('fa-moon');
+            if (!response.ok) {
+              throw new Error('No se pudo guardar la preferencia.');
             }
-          } else {
-            localStorage.setItem('dark-mode', 'disabled');
-            if (modeIcon) {
-              modeIcon.classList.remove('fa-moon');
-              modeIcon.classList.add('fa-sun');
-            }
+
+            savedThemeMode = nextThemeMode;
+          } catch (error) {
+            applyTheme(savedThemeMode);
+            window.Swal?.fire('No fue posible guardar el modo visual', 'Intenta nuevamente.', 'error');
           }
         });
       }

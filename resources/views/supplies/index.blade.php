@@ -8,25 +8,30 @@
     <div class="container-fluid py-4 supplies-shell">
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
             <div class="supplies-page-header">
-                <h1 class="h3 mb-1">Modulo de proveeduria</h1>
-                <p class="text-muted mb-0">Solicitudes internas, auditoria de recibido, clientes y catalogo editable.</p>
+                <h1 class="h3 mb-1">Módulo de proveeduría</h1>
+                <p class="text-muted mb-0">Solicitudes internas, auditoría de recibido, clientes y catálogo editable.</p>
             </div>
-            <div class="d-flex flex-wrap gap-2">
+            <div class="supplies-page-actions">
                 <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#createSupplyRequestModal">
                     <i class="fas fa-file-signature me-1"></i> Nueva solicitud
                 </button>
-                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#managePurchaseRecipientsModal">
-                    <i class="fas fa-envelope me-1"></i> Correos compras
-                </button>
-                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#createSupplyClientModal">
-                    <i class="fas fa-building me-1"></i> Nuevo cliente
-                </button>
-                <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#createSupplyProductModal">
-                    <i class="fas fa-box-open me-1"></i> Nuevo producto
-                </button>
-                @if ($activeTab === 'products')
+                @if ($activeTab === 'requests')
+                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#managePurchaseRecipientsModal">
+                        <i class="fas fa-envelope me-1"></i> Correos compras
+                    </button>
+                @elseif ($activeTab === 'products')
+                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#createSupplyProductModal">
+                        <i class="fas fa-box-open me-1"></i> Nuevo producto
+                    </button>
                     <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#supplyStockThresholdsModal">
                         <i class="fas fa-sliders-h me-1"></i> Parametrizar existencias
+                    </button>
+                @elseif ($activeTab === 'clients')
+                    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#createSupplyClientModal">
+                        <i class="fas fa-building me-1"></i> Nuevo cliente
+                    </button>
+                    <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#importSupplyClientModal">
+                        <i class="fas fa-file-import me-1"></i> Importar clientes
                     </button>
                 @endif
             </div>
@@ -73,25 +78,25 @@
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'requests' ? 'active' : '' }}"
                     href="{{ route('supplies.index', array_merge(request()->query(), ['tab' => 'requests'])) }}">
-                    Solicitudes
+                    <i class="fas fa-file-signature me-1"></i> Solicitudes
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'products' ? 'active' : '' }}"
                     href="{{ route('supplies.index', array_merge(request()->query(), ['tab' => 'products'])) }}">
-                    Catalogo Proveeduria
+                    <i class="fas fa-boxes-stacked me-1"></i> Catálogo Proveeduría
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'analytics' ? 'active' : '' }}"
                     href="{{ route('supplies.index', array_merge(request()->query(), ['tab' => 'analytics'])) }}">
-                    Analitica
+                    <i class="fas fa-chart-line me-1"></i> Analítica
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $activeTab === 'clients' ? 'active' : '' }}"
                     href="{{ route('supplies.index', array_merge(request()->query(), ['tab' => 'clients'])) }}">
-                    Clientes
+                    <i class="fas fa-address-book me-1"></i> Clientes
                 </a>
             </li>
         </ul>
@@ -697,6 +702,7 @@
             </div>
         </div>
     </div>
+
 @endsection
 
 @section('scripts')
@@ -1110,8 +1116,17 @@
                 lengthMenu: [5, 10, 25, 50, 100],
                 order: [],
                 autoWidth: false,
-                responsive: true
+                responsive: true,
+                initComplete: function () {
+                    $(this.api().table().container()).find('[aria-role]').removeAttr('aria-role');
+                }
             };
+
+            // DataTables 1.13 adds a non-standard aria-role attribute to its
+            // pagination links. Remove it after every redraw for valid ARIA.
+            $('.supplies-shell').on('draw.dt', 'table', function () {
+                $(this).find('[aria-role]').removeAttr('aria-role');
+            });
 
             if ($('#suppliesRequestsTable tbody tr').length > 0 && !$('#suppliesRequestsTable tbody tr td[colspan]').length) {
                 $('#suppliesRequestsTable').DataTable($.extend({}, DT_COMMON, { pageLength: 10 }));
@@ -1124,6 +1139,8 @@
             if ($('#suppliesClientsTable tbody tr').length > 0 && !$('#suppliesClientsTable tbody tr td[colspan]').length) {
                 $('#suppliesClientsTable').DataTable($.extend({}, DT_COMMON, { pageLength: 10 }));
             }
+
+            $('.supplies-shell [aria-role]').removeAttr('aria-role');
 
             const analyticsData = window.suppliesAnalyticsData || null;
 
@@ -1230,6 +1247,7 @@
                     }
                 });
             }
+
         });
     </script>
     <style>

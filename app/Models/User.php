@@ -35,6 +35,8 @@ class User extends Authenticatable
         'regional',
         'is_active',
         'synced_from_hr_at',
+        'theme_mode',
+        'two_factor_enabled',
     ];
     public function sendPasswordResetNotification($token)
     {
@@ -60,6 +62,7 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
         'synced_from_hr_at' => 'datetime',
+        'two_factor_enabled' => 'boolean',
     ];
 
     public function isWarehouseOnly(): bool
@@ -70,6 +73,12 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->hasAnyRole(['SUPERADMIN', 'SUPER_ADMIN']);
+    }
+
+    public function requiresTwoFactorAuthentication(): bool
+    {
+        return (bool) config('auth.two_factor_enabled', true)
+            && (bool) $this->two_factor_enabled;
     }
 
     public function isSupplyAdmin(): bool

@@ -16,7 +16,7 @@ class RequireCustomerSelection
             return $next($request);
         }
 
-        if ((bool) config('auth.two_factor_enabled', true) && !session('two_factor_verified')) {
+        if ($request->user()->requiresTwoFactorAuthentication() && !session('two_factor_verified')) {
             return $next($request);
         }
 
@@ -40,6 +40,7 @@ class RequireCustomerSelection
             'permissions.',
             'roles.',
             'profiles.',
+            'preferences.',
             'admin.',
             'role_permissions.',
             'warehouse.',

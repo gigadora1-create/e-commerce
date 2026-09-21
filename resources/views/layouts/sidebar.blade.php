@@ -1,4 +1,4 @@
-<ul class="navbar-nav bg-white sidebar sidebar-light accordion" id="accordionSidebar">
+<nav class="navbar-nav bg-white sidebar sidebar-light accordion" id="accordionSidebar" aria-label="Navegación principal">
     <a class="sidebar-brand d-flex align-items-center justify-content-center" href="https://www.glecolombia.com/">
         <div class="logo-container">
             <img src="/images/logo_ecommerce.png" alt="Logotipo" class="logo-image">
@@ -20,23 +20,23 @@
     @endphp
 
     @if($isWarehouseOnly)
-        <li class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('warehouse.index') }}">
+        <div class="nav-item">
+            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('warehouse.index') }}" aria-label="Bodega y trazabilidad">
                 <i class="fas fa-warehouse"></i>
                 <span>Bodega / Trazabilidad</span>
             </a>
-        </li>
+        </div>
     @elseif($isSupplyAdminOnly)
-        <li class="nav-item dropdown">
+        <div class="nav-item dropdown">
             <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
                 id="supplyOnlyDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-                aria-expanded="false">
+                aria-expanded="false" aria-label="Proveeduría">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Proveeduria</span>
             </a>
             <div class="dropdown-menu" aria-labelledby="supplyOnlyDropdown">
                 <a class="dropdown-item" href="{{ route('supplies.index') }}">
-                    <i class="fas fa-dolly-flatbed"></i> Abastecimiento
+                    <i class="fas fa-dolly-flatbed"></i> Proveeduria
                 </a>
                 <a class="dropdown-item" href="{{ route('supplies.index', ['tab' => 'products']) }}">
                     <i class="fas fa-box-open"></i> Catalogo Proveeduria
@@ -45,27 +45,27 @@
                     <i class="fas fa-file-export"></i> Solicitudes usuarios
                 </a>
             </div>
-        </li>
+        </div>
     @elseif($isSupplyRequesterOnly)
-        <li class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('supplies.issues.index') }}">
+        <div class="nav-item">
+            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('supplies.issues.index') }}" aria-label="Proveeduria">
                 <i class="fas fa-clipboard-list"></i>
                 <span>Proveeduria</span>
             </a>
-        </li>
+        </div>
     @else
-        <li class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('dashboard') }}">
+        <div class="nav-item">
+            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('dashboard') }}" aria-label="Inicio">
                 <i class="fas fa-fw fa-tachometer-alt"></i>
                 <span>Inicio</span>
             </a>
-        </li>
+        </div>
 
         @if(auth()->check() && !auth()->user()->hasRole('USUARIO_CLIENTE'))
-            <li class="nav-item dropdown">
+            <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
                     id="ecommerceDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false">
+                    aria-expanded="false" aria-label="E-commerce">
                     <i class="fas fa-store"></i>
                     <span>E-commerce</span>
                 </a>
@@ -89,21 +89,21 @@
                         <i class="fas fa-users"></i> Clientes
                     </a>
                 </div>
-            </li>
+            </div>
         @endif
 
         @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('supplies.admin') || auth()->user()->can('supplies.request')))
-            <li class="nav-item dropdown">
+            <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
                     id="suppliesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false">
+                    aria-expanded="false" aria-label="Proveeduria">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Proveeduria</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="suppliesDropdown">
                     @if(auth()->user()->isSuperAdmin() || auth()->user()->can('supplies.admin'))
                         <a class="dropdown-item" href="{{ route('supplies.index') }}">
-                            <i class="fas fa-dolly-flatbed"></i> Abastecimiento
+                            <i class="fas fa-dolly-flatbed"></i> Proveeduria
                         </a>
                         <a class="dropdown-item" href="{{ route('supplies.index', ['tab' => 'products']) }}">
                             <i class="fas fa-box-open"></i> Catalogo Proveeduria
@@ -115,59 +115,59 @@
                         </a>
                     @endif
                 </div>
-            </li>
+            </div>
         @endif
 
         @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('UBICACION')))
-            <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link d-flex flex-column align-items-center text-center"
-                    href="{{ route('locations.index') }}">
+                    href="{{ route('locations.index') }}" aria-label="Ubicaciones">
                     <i class="fas fa-map-marker-alt"></i>
                     <span>Ubicaciones</span>
                 </a>
-            </li>
+            </div>
         @endif
 
         @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('warehouse.view') || auth()->user()->can('warehouse.manage')))
-            <li class="nav-item">
+            <div class="nav-item">
                 <a class="nav-link d-flex flex-column align-items-center text-center"
-                    href="{{ route('warehouse.index') }}">
+                    href="{{ route('warehouse.index') }}" aria-label="Bodega">
                     <i class="fas fa-warehouse"></i>
                     <span>Bodega</span>
                 </a>
-            </li>
+            </div>
         @endif
 
-        <li class="nav-item">
+        <div class="nav-item">
             <a class="nav-link d-flex flex-column align-items-center text-center"
-                href="{{ route('barcode.index') }}">
+                href="{{ route('barcode.index') }}" aria-label="Codigos de barras">
                 <i class="fas fa-barcode"></i>
                 <span>Codigos de Barras</span>
             </a>
-        </li>
+        </div>
 
-        <li class="nav-item">
+        <div class="nav-item">
             <a class="nav-link d-flex flex-column align-items-center text-center"
-                href="{{ route('picking.index') }}">
+                href="{{ route('picking.index') }}" aria-label="Picking">
                 <i class="fas fa-dolly"></i>
                 <span>Picking</span>
             </a>
-        </li>
+        </div>
 
         @can('SUPER_ADMIN')
-            <li class="nav-item">
-                <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('send.index') }}">
+            <div class="nav-item">
+                <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('send.index') }}" aria-label="Mensajeria">
                     <i class="fas fa-sms"></i>
                     <span>Mensajeria</span>
                 </a>
-            </li>
+            </div>
         @endcan
 
         @if(auth()->check() && auth()->user()->isSuperAdmin())
-            <li class="nav-item dropdown">
+            <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
                     id="usuariosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
-                    aria-expanded="false">
+                    aria-expanded="false" aria-label="Usuarios">
                     <i class="fas fa-fw fa-users"></i>
                     <span>Usuarios</span>
                 </a>
@@ -181,12 +181,15 @@
                     <a class="dropdown-item" href="{{ route('admin.index') }}">
                         <i class="fas fa-fw fa-id-card"></i> Administrador
                     </a>
+                    <a class="dropdown-item" href="{{ route('profiles.preferences.index') }}">
+                        <i class="fas fa-fw fa-sliders-h"></i> Preferencias
+                    </a>
                     <a class="dropdown-item icon-tooltip" href="{{ route('role_permissions.index') }}"
                         data-tooltip="Asignar Permisos a Roles">
                         <i class="fas fa-fw fa-user-lock"></i> Asignar Permisos
                     </a>
                 </div>
-            </li>
+            </div>
         @endif
     @endif
-</ul>
+</nav>

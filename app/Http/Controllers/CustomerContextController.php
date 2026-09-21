@@ -36,7 +36,7 @@ class CustomerContextController extends Controller
             return redirect()->route('login');
         }
 
-        if ((bool) config('auth.two_factor_enabled', true) && !session('two_factor_verified')) {
+        if ($request->user()->requiresTwoFactorAuthentication() && !session('two_factor_verified')) {
             return redirect()->route('two-factor.show-code-form');
         }
 

@@ -59,7 +59,7 @@ class SupplyModuleTest extends TestCase
         $this->actingAs($user)
             ->get(route('supplies.index'))
             ->assertOk()
-            ->assertSee('Modulo de proveeduria');
+            ->assertSee('Módulo de proveeduría');
     }
 
     public function test_warehouse_only_user_cannot_access_supplies_module(): void

@@ -363,7 +363,7 @@
                     type: "POST",
                     data: $(this).serialize(),
                     success: function(response) {
-                        $('#createUserModal').modal('hide');
+                        bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
                         
                         Swal.fire({
                             title: '¡Éxito!',
@@ -400,12 +400,22 @@
                 });
             });
 
-            // Cargar datos para el modal de edición
-            $('.edit-user').click(function() {
-                const userId = $(this).data('id');
-                
+            // Cargar datos para el modal de edición (delegación para DataTables)
+            $(document).on('click', '.edit-user', function() {
+                var userId = $(this).data('id');
+                $('#edit-id').val(userId);
+                $('#edit-name').val('');
+                $('#edit-email').val('');
+                $('#edit-telephone').val('');
+                $('#edit-address').val('');
+                $('#edit-position').val('');
+                $('#edit-process').val('');
+                $('#edit-regional').val('');
+                $('#edit-is-active').prop('checked', false);
+                $('#edit-password').val('');
+
                 $.ajax({
-                    url: "{{ route('profiles.show', '') }}/" + userId,
+                    url: "{{ route('profiles.show', ['profile' => ':id']) }}".replace(':id', userId),
                     type: "GET",
                     success: function(data) {
                         $('#edit-id').val(data.id);
@@ -431,24 +441,24 @@
             });
 
             // Validación del formulario de edición
-            $("#edit-user-form").on('submit', function(e) {
+            $(document).on('submit', '#edit-user-form', function(e) {
                 e.preventDefault();
                 
-                const form = $(this)[0];
+                var form = $(this)[0];
                 if (!form.checkValidity()) {
                     e.stopPropagation();
                     $(form).addClass('was-validated');
                     return;
                 }
                 
-                const userId = $("#edit-id").val();
+                var userId = $("#edit-id").val();
                 
                 $.ajax({
-                    url: "{{ route('profiles.update', '') }}/" + userId,
+                    url: "{{ route('profiles.update', ['profile' => ':id']) }}".replace(':id', userId),
                     type: "PATCH",
                     data: $(this).serialize(),
                     success: function(response) {
-                        $('#editUserModal').modal('hide');
+                        bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
                         
                         Swal.fire({
                             title: '¡Éxito!',
@@ -462,7 +472,7 @@
                         });
                     },
                     error: function(xhr) {
-                        let errors = xhr.responseJSON?.errors || {};
+                        var errors = xhr.responseJSON?.errors || {};
                         $('#edit-user-form .form-control').removeClass('is-invalid');
                         $('#edit-user-form .invalid-feedback').text('');
                         
@@ -489,12 +499,12 @@
                 });
             });
 
-            // Cargar datos para el modal de mostrar
-            $('.show-user').click(function() {
-                const userId = $(this).data('id');
+            // Cargar datos para el modal de mostrar (delegación para DataTables)
+            $(document).on('click', '.show-user', function() {
+                var userId = $(this).data('id');
                 
                 $.ajax({
-                    url: "{{ route('profiles.show', '') }}/" + userId,
+                    url: "{{ route('profiles.show', ['profile' => ':id']) }}".replace(':id', userId),
                     type: "GET",
                     success: function(data) {
                         $('#show-id').text(data.id);
@@ -517,9 +527,9 @@
                 });
             });
 
-            // Eliminar usuario
-            $('.delete-user').click(function() {
-                const userId = $(this).data('id');
+            // Eliminar usuario (delegación para DataTables)
+            $(document).on('click', '.delete-user', function() {
+                var userId = $(this).data('id');
                 
                 Swal.fire({
                     title: '¿Estás seguro?',
@@ -533,7 +543,7 @@
                 }).then((result) => {
                     if (result.isConfirmed) {
                         $.ajax({
-                            url: "{{ route('profiles.destroy', '') }}/" + userId,
+                            url: "{{ route('profiles.destroy', ['profile' => ':id']) }}".replace(':id', userId),
                             type: "DELETE",
                             data: {
                                 "_token": "{{ csrf_token() }}"
@@ -545,11 +555,9 @@
                                     icon: 'success',
                                     confirmButtonText: 'Aceptar'
                                 }).then(() => {
-                                    // Eliminar la fila de la tabla
                                     $(`tr[data-id="${userId}"]`).fadeOut(500, function() {
                                         $(this).remove();
                                         
-                                        // Verificar si no quedan más usuarios
                                         if ($('#users-table tr').length === 0) {
                                             location.reload();
                                         }

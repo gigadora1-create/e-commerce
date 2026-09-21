@@ -32,21 +32,31 @@ class SupplyController extends Controller
     {
         $activeTab = $request->string('tab', 'requests')->toString();
 
-        $requests = SupplyRequest::query()
-            ->with(['requestedBy:id,name', 'auditedBy:id,name', 'client:id,name'])
-            ->withCount('items')
-            ->orderByDesc('id')
-            ->get();
+        if (!in_array($activeTab, ['requests', 'products', 'analytics', 'clients'], true)) {
+            $activeTab = 'requests';
+        }
 
-        $products = SupplyProduct::query()
-            ->orderBy('catalog_number')
-            ->get();
+        $requests = $activeTab === 'requests'
+            ? SupplyRequest::query()
+                ->with(['requestedBy:id,name', 'auditedBy:id,name', 'client:id,name'])
+                ->withCount('items')
+                ->orderByDesc('id')
+                ->get()
+            : new Collection();
 
-        $clients = SupplyClient::query()
-            ->orderBy('name')
-            ->get();
+        $products = $activeTab === 'products'
+            ? SupplyProduct::query()
+                ->orderBy('catalog_number')
+                ->get()
+            : new Collection();
 
-        $purchaseRecipients = Schema::hasTable('supply_purchase_recipients')
+        $clients = $activeTab === 'clients'
+            ? SupplyClient::query()
+                ->orderBy('name')
+                ->get()
+            : new Collection();
+
+        $purchaseRecipients = $activeTab === 'requests' && Schema::hasTable('supply_purchase_recipients')
             ? SupplyPurchaseRecipient::query()
                 ->orderByDesc('is_active')
                 ->orderBy('email')
@@ -74,8 +84,8 @@ class SupplyController extends Controller
             ->values();
 
         $stats = $this->getRequestStats();
-        $analyticsFilters = $this->resolveAnalyticsFilters($request);
-        $analytics = $this->buildClientAnalytics($analyticsFilters);
+        $analyticsFilters = $activeTab === 'analytics' ? $this->resolveAnalyticsFilters($request) : [];
+        $analytics = $activeTab === 'analytics' ? $this->buildClientAnalytics($analyticsFilters) : [];
 
         return view('supplies.index', compact(
             'activeTab',

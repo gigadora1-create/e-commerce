@@ -33,7 +33,7 @@ class Ensure2FA
             return redirect()->route('login');
         }
 
-        if (!(bool) config('auth.two_factor_enabled', true)) {
+        if (!$request->user()->requiresTwoFactorAuthentication()) {
             $request->session()->put('two_factor_verified', true);
             $request->session()->forget([
                 'two_factor_code',

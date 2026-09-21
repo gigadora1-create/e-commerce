@@ -27,6 +27,7 @@ use App\Http\Controllers\SupplyController;
 use App\Http\Controllers\SupplyIssueController;
 use App\Http\Controllers\SupplyClientController;
 use App\Http\Controllers\SupplyPurchaseRecipientController;
+use App\Http\Controllers\UserPreferenceController;
 
 Route::redirect('/', '/login');
 Route::get('/favicon.ico', static fn () => response()->noContent());
@@ -49,6 +50,9 @@ Route::match(['get', 'post'], '/two-factor/send', [TwoFactorAuthController::clas
 
 
 Route::middleware('auth')->group(function () {
+    Route::get('/preferences', [UserPreferenceController::class, 'edit'])->name('preferences.edit');
+    Route::put('/preferences', [UserPreferenceController::class, 'update'])->name('preferences.update');
+
     Route::get('/customer-context', [CustomerContextController::class, 'index'])->name('customer.context.index');
     Route::post('/customer-context', [CustomerContextController::class, 'store'])->name('customer.context.store');
     Route::post('/customer-context/clear', [CustomerContextController::class, 'clear'])->name('customer.context.clear');
@@ -231,6 +235,9 @@ Route::post('/inventories', [InventoryController::class, 'store'])->name('invent
 Route::post('/inventories/release-retention', [InventoryController::class, 'releaseFromRetention'])->name('inventories.release-retention');
 Route::middleware(['auth'])->group(function () {
     Route::middleware(['super.admin'])->group(function () {
+        Route::get('profiles/preferences', [UserPreferenceController::class, 'index'])->name('profiles.preferences.index');
+        Route::put('profiles/{user}/preferences', [UserPreferenceController::class, 'updateUser'])->name('profiles.preferences.update');
+        Route::put('profiles/preferences/two-factor', [UserPreferenceController::class, 'updateTwoFactorForAll'])->name('profiles.preferences.two-factor.update');
         Route::resource('permissions', PermissionController::class);
         Route::resource('roles', RoleController::class);
         Route::post('profiles/sync-hr', [ProfileController::class, 'syncHr'])->name('profiles.sync-hr');

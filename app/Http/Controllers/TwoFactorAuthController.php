@@ -93,7 +93,7 @@ class TwoFactorAuthController extends Controller
 
     protected function isTwoFactorEnabled(): bool
     {
-        return (bool) config('auth.two_factor_enabled', true);
+        return Auth::user()?->requiresTwoFactorAuthentication() ?? false;
     }
 
     protected function completeWithoutTwoFactor(Request $request)

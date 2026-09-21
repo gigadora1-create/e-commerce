@@ -493,6 +493,17 @@
         min-height: 42px;
     }
 
+    .supplies-shell .supplies-page-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.5rem;
+    }
+
+    .supplies-shell .supplies-page-actions .btn {
+        min-height: 42px;
+    }
+
     .supplies-shell .supplies-stats-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -674,6 +685,14 @@
         font-size: 0.78rem;
         letter-spacing: 0.02em;
         padding: 0.35em 0.65em;
+    }
+
+    .supplies-shell .badge.bg-primary,
+    .supplies-shell .badge.bg-secondary,
+    .supplies-shell .badge.bg-success,
+    .supplies-shell .badge.bg-danger,
+    .supplies-shell .badge.bg-info {
+        color: #ffffff !important;
     }
 
     .supplies-shell .supplies-panel {
@@ -860,7 +879,7 @@
         }
 
         .supplies-shell .supplies-stats-grid {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .supplies-shell .display-6,
@@ -885,6 +904,20 @@
             align-items: stretch;
         }
 
+        .supplies-shell .supplies-page-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
+        }
+
+        .supplies-shell .supplies-page-actions .btn {
+            width: 100%;
+        }
+
+        .supplies-shell .supplies-page-actions .btn:first-child {
+            grid-column: 1 / -1;
+        }
+
         .supplies-shell .supplies-toolbar > :last-child {
             max-width: 100%;
         }
@@ -904,6 +937,12 @@
 
         .supplies-shell .supply-request-table-wrap {
             overflow-x: auto;
+        }
+    }
+
+    @media (max-width: 359px) {
+        .supplies-shell .supplies-stats-grid {
+            grid-template-columns: 1fr;
         }
     }
 </style>

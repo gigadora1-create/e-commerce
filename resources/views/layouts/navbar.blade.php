@@ -390,7 +390,7 @@
 
   <ul class="navbar-nav ms-auto navbar-actions">
     <li class="nav-item">
-      <button id="toggle-night-mode" class="btn btn-link" title="Cambiar modo">
+      <button id="toggle-night-mode" class="btn btn-link" type="button" title="Cambiar modo" aria-label="Cambiar modo visual">
         <i id="mode-icon" class="fas fa-sun"></i>
       </button>
     </li>
@@ -410,6 +410,10 @@
       </a>
       <!-- Dropdown - User Information -->
       <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+        <a class="dropdown-item" href="{{ route('preferences.edit') }}">
+          <i class="fas fa-sliders-h fa-sm fa-fw me-2 text-gray-400"></i>
+          Preferencias
+        </a>
         @can('SUPER_ADMIN')
           <a class="dropdown-item" href="{{ route('profiles.index') }}">
             <i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>
