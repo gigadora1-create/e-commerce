@@ -81,6 +81,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/products', [SupplyController::class, 'storeProduct'])
             ->middleware('can:supplies.admin')
             ->name('products.store');
+        Route::post('/products/import', [SupplyController::class, 'importProducts'])
+            ->middleware('can:supplies.admin')
+            ->name('products.import');
+        Route::get('/products/template', [SupplyController::class, 'downloadProductTemplate'])
+            ->middleware('can:supplies.admin')
+            ->name('products.template');
         Route::put('/products/stock-thresholds', [SupplyController::class, 'updateStockThresholds'])
             ->middleware('can:supplies.admin')
             ->name('products.stock-thresholds.update');
@@ -158,6 +164,9 @@ Route::middleware('auth')->group(function () {
             Route::put('/{issueRequest}/reject', [SupplyIssueController::class, 'reject'])
                 ->middleware('can:supplies.admin')
                 ->name('reject');
+            Route::delete('/{issueRequest}', [SupplyIssueController::class, 'destroy'])
+                ->middleware('super.admin')
+                ->name('destroy');
         });
     });
 });

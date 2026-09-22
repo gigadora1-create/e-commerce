@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\SupplyIssueRequest;
+use App\Models\SupplyIssueRequestItem;
 use App\Models\SupplyReqCaseSync;
 use App\Models\SupplyClient;
 use App\Models\SupplyProduct;
 use App\Models\SupplyRequest;
+use App\Models\SupplyStockMovement;
 use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -183,6 +185,35 @@ class SupplyPhaseTwoTest extends TestCase
             ->assertSee('Alerta de stock bajo');
     }
 
+    public function test_admin_cannot_mark_issue_ready_without_prepared_quantities(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-13 10:00:00', 'America/Bogota'));
+
+        $admin = User::factory()->create();
+        $admin->syncRoles(['PROVEEDURIA_ADMIN']);
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $product = SupplyProduct::query()->firstOrFail();
+        $client = SupplyClient::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 4, 'reserved_stock' => 0]);
+
+        $this->actingAs($requester)->post(route('supplies.issues.store'), [
+            'supply_client_id' => $client->id,
+            'product_id' => [$product->id],
+            'requested_quantity' => [2],
+        ])->assertRedirect();
+
+        $issueRequest = SupplyIssueRequest::query()->latest('id')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->put(route('supplies.issues.ready', $issueRequest), [
+                'delivered_quantity' => [],
+            ])
+            ->assertSessionHasErrors('delivered_quantity');
+
+        $this->assertSame(SupplyIssueRequest::STATUS_PREPARING, $issueRequest->fresh()->status);
+    }
+
     public function test_issue_request_reserves_stock_and_close_deducts_it(): void
     {
         CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-13 10:00:00', 'America/Bogota'));
@@ -214,6 +245,11 @@ class SupplyPhaseTwoTest extends TestCase
         $this->assertSame(12, (int) $product->stock_on_hand);
         $this->assertSame(5, (int) $product->reserved_stock);
         $this->assertSame(7, (int) $product->available_stock);
+
+        $item = $issueRequest->items()->firstOrFail();
+        $this->actingAs($admin)->put(route('supplies.issues.ready', $issueRequest), [
+            'delivered_quantity' => [$item->id => 5],
+        ])->assertRedirect(route('supplies.issues.show', $issueRequest));
 
         $this->actingAs($admin)->put(route('supplies.issues.close', $issueRequest), [
             'support_received' => true,
@@ -250,9 +286,12 @@ class SupplyPhaseTwoTest extends TestCase
         $issueRequest = SupplyIssueRequest::query()->latest('id')->firstOrFail();
         $item = $issueRequest->items()->firstOrFail();
 
-        $this->actingAs($admin)->put(route('supplies.issues.close', $issueRequest), [
+        $this->actingAs($admin)->put(route('supplies.issues.ready', $issueRequest), [
             'delivered_quantity' => [$item->id => 3],
         ])->assertRedirect(route('supplies.issues.show', $issueRequest));
+
+        $this->actingAs($admin)->put(route('supplies.issues.close', $issueRequest))
+            ->assertRedirect(route('supplies.issues.show', $issueRequest));
 
         $issueRequest->refresh();
         $product->refresh();
@@ -292,9 +331,12 @@ class SupplyPhaseTwoTest extends TestCase
         $issueRequest = SupplyIssueRequest::query()->latest('id')->firstOrFail();
         $item = $issueRequest->items()->firstOrFail();
 
-        $this->actingAs($admin)->put(route('supplies.issues.close', $issueRequest), [
+        $this->actingAs($admin)->put(route('supplies.issues.ready', $issueRequest), [
             'delivered_quantity' => [$item->id => 5],
             'admin_notes' => 'Entrega parcial autorizada',
+        ])->assertRedirect(route('supplies.issues.show', $issueRequest));
+
+        $this->actingAs($admin)->put(route('supplies.issues.close', $issueRequest), [
             'support_received' => true,
         ])->assertRedirect(route('supplies.issues.show', $issueRequest));
 
@@ -376,11 +418,53 @@ class SupplyPhaseTwoTest extends TestCase
         $this->actingAs($otherUser)->get(route('supplies.issues.show', $ownRequest))->assertForbidden();
         $this->actingAs($requester)->get(route('supplies.issues.pdf', $ownRequest))->assertForbidden();
 
+        $item = $ownRequest->items()->firstOrFail();
+        $this->actingAs($admin)->put(route('supplies.issues.ready', $ownRequest), [
+            'delivered_quantity' => [$item->id => 2],
+        ])->assertRedirect();
+
+        $this->actingAs($requester)->get(route('supplies.issues.index'))
+            ->assertOk()
+            ->assertSee('PDF');
+        $this->actingAs($requester)->get(route('supplies.issues.pdf', $ownRequest))->assertOk();
+
         $this->actingAs($admin)->put(route('supplies.issues.close', $ownRequest), [
             'support_received' => true,
         ])->assertRedirect();
 
         $this->actingAs($requester)->get(route('supplies.issues.pdf', $ownRequest))->assertOk();
+    }
+
+    public function test_admin_cannot_reject_issue_request_after_it_is_ready_for_pickup(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-13 10:00:00', 'America/Bogota'));
+
+        $admin = User::factory()->create();
+        $admin->syncRoles(['PROVEEDURIA_ADMIN']);
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $product = SupplyProduct::query()->firstOrFail();
+        $client = SupplyClient::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 3, 'reserved_stock' => 0]);
+
+        $this->actingAs($requester)->post(route('supplies.issues.store'), [
+            'supply_client_id' => $client->id,
+            'product_id' => [$product->id],
+            'requested_quantity' => [1],
+        ])->assertRedirect();
+
+        $issueRequest = SupplyIssueRequest::query()->latest('id')->firstOrFail();
+        $item = $issueRequest->items()->firstOrFail();
+
+        $this->actingAs($admin)->put(route('supplies.issues.ready', $issueRequest), [
+            'delivered_quantity' => [$item->id => 1],
+        ])->assertRedirect();
+
+        $this->actingAs($admin)
+            ->put(route('supplies.issues.reject', $issueRequest))
+            ->assertForbidden();
+
+        $this->assertSame(SupplyIssueRequest::STATUS_READY, $issueRequest->fresh()->status);
     }
 
     public function test_supply_requester_only_is_restricted_to_supply_issue_module(): void
@@ -512,5 +596,134 @@ class SupplyPhaseTwoTest extends TestCase
                 && $request['source_request_id'] === $supplyRequest->id
                 && $request['source_request_number'] === $supplyRequest->request_number;
         });
+    }
+
+    public function test_superadmin_can_delete_a_preparing_issue_request_and_release_its_stock(): void
+    {
+        $superAdminRole = Role::findOrCreate('SUPERADMIN', 'web');
+        $superAdminRole->syncPermissions(['supplies.admin', 'supplies.request']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->syncRoles(['SUPERADMIN']);
+
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $client = SupplyClient::query()->firstOrFail();
+        $product = SupplyProduct::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 10, 'reserved_stock' => 4]);
+
+        $issueRequest = SupplyIssueRequest::query()->create([
+            'request_number' => 'SAL-900001',
+            'requested_by_user_id' => $requester->id,
+            'supply_client_id' => $client->id,
+            'status' => SupplyIssueRequest::STATUS_PREPARING,
+            'requested_at' => now(),
+        ]);
+        SupplyIssueRequestItem::query()->create([
+            'supply_issue_request_id' => $issueRequest->id,
+            'supply_product_id' => $product->id,
+            'requested_quantity' => 4,
+            'reserved_quantity' => 4,
+            'delivered_quantity' => 0,
+            'available_quantity_at_request' => 10,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->get(route('supplies.issues.index'))
+            ->assertOk()
+            ->assertSee('Eliminar');
+
+        $this->actingAs($superAdmin)
+            ->delete(route('supplies.issues.destroy', $issueRequest))
+            ->assertRedirect(route('supplies.issues.index'));
+
+        $product->refresh();
+        $this->assertDatabaseMissing('supply_issue_requests', ['id' => $issueRequest->id]);
+        $this->assertSame(0, (int) $product->reserved_stock);
+        $this->assertTrue(SupplyStockMovement::query()
+            ->where('supply_product_id', $product->id)
+            ->where('movement_type', 'delete_issue_request')
+            ->where('quantity', -4)
+            ->exists());
+    }
+
+    public function test_issue_numbers_continue_from_the_latest_sal_document_number(): void
+    {
+        SystemSetting::putBoolean(SystemSetting::SUPPLY_ISSUE_SCHEDULE_RESTRICTION, false);
+
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $client = SupplyClient::query()->firstOrFail();
+        $product = SupplyProduct::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 10, 'reserved_stock' => 0]);
+
+        $highestNumber = SupplyIssueRequest::query()
+            ->pluck('request_number')
+            ->map(fn (string $number) => preg_match('/^SAL-(\d+)$/', $number, $matches) ? (int) $matches[1] : 0)
+            ->max() ?? 0;
+        $seedNumber = max($highestNumber, 900010) + 1;
+
+        SupplyIssueRequest::query()->create([
+            'request_number' => 'SAL-' . str_pad((string) $seedNumber, 6, '0', STR_PAD_LEFT),
+            'requested_by_user_id' => $requester->id,
+            'supply_client_id' => $client->id,
+            'status' => SupplyIssueRequest::STATUS_REJECTED,
+            'requested_at' => now(),
+        ]);
+
+        $this->actingAs($requester)
+            ->post(route('supplies.issues.store'), [
+                'supply_client_id' => $client->id,
+                'product_id' => [$product->id],
+                'requested_quantity' => [1],
+            ])
+            ->assertRedirect(route('supplies.issues.index'));
+
+        $this->assertDatabaseHas('supply_issue_requests', [
+            'request_number' => 'SAL-' . str_pad((string) ($seedNumber + 1), 6, '0', STR_PAD_LEFT),
+            'requested_by_user_id' => $requester->id,
+        ]);
+    }
+
+    public function test_superadmin_deleting_a_closed_request_restores_delivered_stock(): void
+    {
+        $superAdminRole = Role::findOrCreate('SUPERADMIN', 'web');
+        $superAdminRole->syncPermissions(['supplies.admin', 'supplies.request']);
+        $superAdmin = User::factory()->create();
+        $superAdmin->syncRoles(['SUPERADMIN']);
+
+        $requester = User::factory()->create();
+        $requester->syncRoles(['PROVEEDURIA_USUARIO']);
+        $client = SupplyClient::query()->firstOrFail();
+        $product = SupplyProduct::query()->firstOrFail();
+        $product->update(['stock_on_hand' => 7, 'reserved_stock' => 0]);
+
+        $issueRequest = SupplyIssueRequest::query()->create([
+            'request_number' => 'SAL-900002',
+            'requested_by_user_id' => $requester->id,
+            'supply_client_id' => $client->id,
+            'status' => SupplyIssueRequest::STATUS_CLOSED,
+            'requested_at' => now()->subDay(),
+            'closed_at' => now(),
+        ]);
+        SupplyIssueRequestItem::query()->create([
+            'supply_issue_request_id' => $issueRequest->id,
+            'supply_product_id' => $product->id,
+            'requested_quantity' => 3,
+            'reserved_quantity' => 3,
+            'delivered_quantity' => 3,
+            'available_quantity_at_request' => 10,
+        ]);
+
+        $this->actingAs($superAdmin)
+            ->delete(route('supplies.issues.destroy', $issueRequest))
+            ->assertRedirect(route('supplies.issues.index'));
+
+        $product->refresh();
+        $this->assertSame(10, (int) $product->stock_on_hand);
+        $this->assertTrue(SupplyStockMovement::query()
+            ->where('supply_product_id', $product->id)
+            ->where('movement_type', 'restore_deleted_issue_request')
+            ->where('quantity', 3)
+            ->exists());
     }
 }

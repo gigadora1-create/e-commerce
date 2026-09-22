@@ -59,9 +59,19 @@ class SupplyNotificationsTest extends TestCase
         $admin = $this->supplyAdmin();
         $requester = $this->requester();
         $issueRequest = $this->issueRequestFor($requester);
+        $product = \App\Models\SupplyProduct::query()->firstOrFail();
+        $item = $issueRequest->items()->create([
+            'supply_product_id' => $product->id,
+            'requested_quantity' => 2,
+            'reserved_quantity' => 2,
+            'delivered_quantity' => 0,
+            'available_quantity_at_request' => 2,
+        ]);
 
         $this->actingAs($admin)
-            ->put(route('supplies.issues.ready', $issueRequest))
+            ->put(route('supplies.issues.ready', $issueRequest), [
+                'delivered_quantity' => [$item->id => 2],
+            ])
             ->assertRedirect(route('supplies.issues.show', $issueRequest));
 
         $notification = $requester->notifications()->firstOrFail();

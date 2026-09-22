@@ -13,7 +13,7 @@
                 <p class="text-muted mb-0">Reserva de stock, alistamiento, retiro y cierre definitivo.</p>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                @if ($isAdmin || $issueRequest->status === \App\Models\SupplyIssueRequest::STATUS_CLOSED)
+                @if ($isAdmin || in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_READY, \App\Models\SupplyIssueRequest::STATUS_PENDING_SUPPORT, \App\Models\SupplyIssueRequest::STATUS_CLOSED], true))
                     <a class="btn btn-outline-danger" href="{{ route('supplies.issues.pdf', $issueRequest) }}">
                         <i class="fas fa-file-pdf me-1"></i> PDF
                     </a>
@@ -88,7 +88,7 @@
                                 <th>Producto</th>
                                 <th>Solicitado</th>
                                 <th>Reservado</th>
-                                <th>Entregado</th>
+                                <th>{{ $issueRequest->status === \App\Models\SupplyIssueRequest::STATUS_PREPARING ? 'A entregar' : 'Alistado para entregar' }}</th>
                                 @if ($isAdmin)
                                     <th>Stock al solicitar</th>
                                 @endif
@@ -122,29 +122,17 @@
                             <form method="POST" action="{{ route('supplies.issues.ready', $issueRequest) }}">
                                 @csrf
                                 @method('PUT')
-                                <button class="btn btn-info text-white" type="submit">Marcar listo para recoger</button>
-                            </form>
-                        @endif
-
-                        @if (in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_PREPARING, \App\Models\SupplyIssueRequest::STATUS_READY], true))
-                            <form method="POST" action="{{ route('supplies.issues.reject', $issueRequest) }}">
-                                @csrf
-                                @method('PUT')
-                                <button class="btn btn-outline-danger" type="submit">Rechazar solicitud</button>
-                            </form>
-                        @endif
-
-                        @if (in_array($issueRequest->status, [\App\Models\SupplyIssueRequest::STATUS_PREPARING, \App\Models\SupplyIssueRequest::STATUS_READY], true))
-                            <form method="POST" action="{{ route('supplies.issues.close', $issueRequest) }}">
-                                @csrf
-                                @method('PUT')
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-clipboard-check me-1"></i>
+                                    Defina las cantidades que se entregaran. Al finalizar se notificara al solicitante y se habilitara el PDF para firma y sello.
+                                </div>
                                 <div class="table-responsive mb-3">
                                     <table class="table table-sm align-middle mb-0">
                                         <thead>
                                             <tr>
                                                 <th>Producto</th>
                                                 <th>Reservado</th>
-                                                <th style="width: 180px;">Entregar ahora</th>
+                                                <th style="width: 180px;">Cantidad a entregar</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -164,14 +152,38 @@
                                     </table>
                                 </div>
                                 <textarea class="form-control mb-3" name="admin_notes" rows="2"
-                                    placeholder="Observacion de entrega parcial o cierre">{{ old('admin_notes', $issueRequest->admin_notes) }}</textarea>
+                                    placeholder="Observacion del alistamiento o entrega parcial">{{ old('admin_notes', $issueRequest->admin_notes) }}</textarea>
+                                <button class="btn btn-info text-white" type="submit">
+                                    <i class="fas fa-check me-1"></i> Finalizar alistamiento y marcar listo para recoger
+                                </button>
+                            </form>
+                        @endif
+
+                        @if ($issueRequest->status === \App\Models\SupplyIssueRequest::STATUS_PREPARING)
+                            <form method="POST" action="{{ route('supplies.issues.reject', $issueRequest) }}">
+                                @csrf
+                                @method('PUT')
+                                <button class="btn btn-outline-danger" type="submit">Rechazar solicitud</button>
+                            </form>
+                        @endif
+
+                        @if ($issueRequest->status === \App\Models\SupplyIssueRequest::STATUS_READY)
+                            <form method="POST" action="{{ route('supplies.issues.close', $issueRequest) }}">
+                                @csrf
+                                @method('PUT')
+                                <div class="alert alert-warning mb-3">
+                                    <i class="fas fa-file-signature me-1"></i>
+                                    La salida se descontara con las cantidades ya alistadas y mostradas en el PDF. No se pueden modificar en este paso.
+                                </div>
+                                <textarea class="form-control mb-3" name="admin_notes" rows="2"
+                                    placeholder="Observacion de recogida o cierre">{{ old('admin_notes', $issueRequest->admin_notes) }}</textarea>
                                 <div class="form-check mb-3">
                                     <input class="form-check-input" type="checkbox" value="1" name="support_received" id="supportReceived">
                                     <label class="form-check-label" for="supportReceived">
                                         El cliente entrego el soporte firmado
                                     </label>
                                 </div>
-                                <button class="btn btn-success" type="submit">Registrar entrega y descontar stock</button>
+                                <button class="btn btn-success" type="submit">Confirmar recogida y descontar stock</button>
                             </form>
                         @endif
 
@@ -190,7 +202,7 @@
                         @endif
                     </div>
                     <div class="text-muted small mt-3">
-                        El stock queda reservado desde la creacion. Al registrar la entrega se descuenta del inventario; sin soporte firmado, la solicitud permanece pendiente de cierre.
+                        El stock queda reservado desde la creacion. Al finalizar el alistamiento se fijan las cantidades y se habilita el PDF; al confirmar la recogida se descuenta el inventario. Sin soporte firmado, la solicitud permanece pendiente de cierre.
                     </div>
                 </div>
             </div>

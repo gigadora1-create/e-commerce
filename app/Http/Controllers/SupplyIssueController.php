@@ -95,6 +95,7 @@ class SupplyIssueController extends Controller
             'catalogProductOptions' => $catalogProductOptions,
             'catalogClientOptions' => $catalogClientOptions,
             'isAdmin' => $isAdmin,
+            'canDeleteIssueRequests' => $user->isSuperAdmin(),
             'requestCreationAllowed' => $isAdmin || $this->canRequesterCreateIssueToday(),
             'requestCreationRestrictionMessage' => 'Solo se puede enviar proveeduria los dias jueves y viernes.',
             'lowStockProducts' => $lowStockProducts,
@@ -204,6 +205,42 @@ class SupplyIssueController extends Controller
     {
         $this->authorize('markReady', $issueRequest);
 
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'delivered_quantity' => ['required', 'array'],
+            'delivered_quantity.*' => ['required', 'integer', 'min:0'],
+            'admin_notes' => ['nullable', 'string'],
+        ]);
+
+        $validator->after(function ($validator) use ($request, $issueRequest) {
+            $issueRequest->loadMissing('items');
+            $totalPrepared = 0;
+
+            foreach ($issueRequest->items as $item) {
+                if (!$request->has("delivered_quantity.{$item->id}")) {
+                    $validator->errors()->add(
+                        "delivered_quantity.{$item->id}",
+                        'Debe indicar la cantidad preparada para cada producto.'
+                    );
+                    continue;
+                }
+
+                $quantity = (int) $request->input("delivered_quantity.{$item->id}");
+                $totalPrepared += $quantity;
+
+                if ($quantity > (int) $item->reserved_quantity) {
+                    $validator->errors()->add(
+                        "delivered_quantity.{$item->id}",
+                        'La cantidad preparada no puede superar la cantidad reservada (' . $item->reserved_quantity . ').'
+                    );
+                }
+            }
+
+            if ($totalPrepared < 1) {
+                $validator->errors()->add('delivered_quantity', 'Debe preparar al menos una unidad antes de marcar la solicitud como lista para recoger.');
+            }
+        });
+
+        $validator->validate();
         $issueRequest = $this->issueService->markReady($request, $issueRequest);
         $this->notificationService->notifyRequester($issueRequest, SupplyIssueNotification::EVENT_READY);
 
@@ -217,34 +254,9 @@ class SupplyIssueController extends Controller
         $this->authorize('close', $issueRequest);
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
-            'delivered_quantity' => ['nullable', 'array'],
-            'delivered_quantity.*' => ['required', 'integer', 'min:0'],
             'admin_notes' => ['nullable', 'string'],
             'support_received' => ['nullable', 'boolean'],
         ]);
-
-        $validator->after(function ($validator) use ($request, $issueRequest) {
-            $issueRequest->loadMissing('items');
-
-            foreach ($issueRequest->items as $item) {
-                if ($request->has('delivered_quantity') && !$request->has("delivered_quantity.{$item->id}")) {
-                    $validator->errors()->add(
-                        "delivered_quantity.{$item->id}",
-                        'Debe indicar la cantidad entregada para cada producto.'
-                    );
-                    continue;
-                }
-
-                $quantity = (int) ($request->input("delivered_quantity.{$item->id}") ?? -1);
-
-                if ($quantity > (int) $item->reserved_quantity) {
-                    $validator->errors()->add(
-                        "delivered_quantity.{$item->id}",
-                        'La cantidad entregada no puede superar la cantidad reservada (' . $item->reserved_quantity . ').'
-                    );
-                }
-            }
-        });
 
         $validator->validate();
 
@@ -289,6 +301,17 @@ class SupplyIssueController extends Controller
         return redirect()
             ->route('supplies.issues.show', $issueRequest)
             ->with('success', 'Solicitud rechazada y reserva liberada correctamente.');
+    }
+
+    public function destroy(Request $request, SupplyIssueRequest $issueRequest)
+    {
+        $this->authorize('deleteIssueRequest', $issueRequest);
+
+        $this->issueService->deleteRequest($request, $issueRequest);
+
+        return redirect()
+            ->route('supplies.issues.index')
+            ->with('success', 'Solicitud ' . $issueRequest->request_number . ' eliminada y reserva de stock liberada.');
     }
 
     public function pdf(Request $request, SupplyIssueRequest $issueRequest)

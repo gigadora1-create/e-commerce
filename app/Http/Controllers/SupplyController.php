@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exports\SupplyClientConsumptionExport;
+use App\Exports\SupplyProductTemplateExport;
+use App\Imports\SupplyProductsImport;
 use App\Models\SupplyClient;
 use App\Models\SupplyIssueRequest;
 use App\Models\SupplyIssueRequestItem;
@@ -17,6 +19,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -142,6 +145,47 @@ class SupplyController extends Controller
         return redirect()
             ->route('supplies.index', ['tab' => 'products'])
             ->with('success', 'Producto de proveeduria creado correctamente con ID ' . $nextCatalogNumber . '.');
+    }
+
+    public function importProducts(Request $request)
+    {
+        $this->authorize('manageProducts', SupplyProduct::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,xls,csv', 'max:5120'],
+        ]);
+
+        try {
+            $import = new SupplyProductsImport($request->user()?->id);
+            Excel::import($import, $request->file('file'));
+
+            return redirect()
+                ->route('supplies.index', ['tab' => 'products'])
+                ->with(
+                    'success',
+                    "Catalogo importado: {$import->getCreatedCount()} producto(s) creado(s), "
+                    . "{$import->getUpdatedCount()} actualizado(s) y {$import->getStockAdded()} unidad(es) agregada(s) al stock."
+                );
+        } catch (\Throwable $exception) {
+            Log::warning('No se pudo importar el catalogo de proveeduria.', [
+                'user_id' => $request->user()?->id,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return redirect()
+                ->route('supplies.index', ['tab' => 'products'])
+                ->with('error', 'No se importo el catalogo. ' . $exception->getMessage());
+        }
+    }
+
+    public function downloadProductTemplate()
+    {
+        $this->authorize('manageProducts', SupplyProduct::class);
+
+        return Excel::download(
+            new SupplyProductTemplateExport(),
+            'plantilla_catalogo_proveeduria.xlsx'
+        );
     }
 
     public function updateProduct(Request $request, SupplyProduct $product)

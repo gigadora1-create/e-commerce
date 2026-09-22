@@ -5,8 +5,10 @@ namespace App\Services\Supply;
 use App\Models\SupplyIssueRequest;
 use App\Models\SupplyProduct;
 use App\Models\SupplyStockMovement;
+use App\Notifications\SupplyIssueNotification;
 use App\Traits\NormalizableItems;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -113,23 +115,38 @@ class SupplyIssueService
             throw new \Exception('Solo se pueden marcar como listas las solicitudes en alistamiento.');
         }
 
-        $issueRequest->update([
-            'status' => SupplyIssueRequest::STATUS_READY,
-            'prepared_by_user_id' => $request->user()?->id,
-            'ready_at' => now(),
-            'admin_notes' => $request->input('admin_notes'),
-        ]);
+        return DB::transaction(function () use ($request, $issueRequest) {
+            $items = $issueRequest->items()->lockForUpdate()->get();
 
-        return $issueRequest;
+            foreach ($items as $item) {
+                $quantity = (int) $request->input("delivered_quantity.{$item->id}");
+
+                if ($quantity < 0 || $quantity > (int) $item->reserved_quantity) {
+                    throw ValidationException::withMessages([
+                        "delivered_quantity.{$item->id}" => 'La cantidad preparada debe estar entre 0 y la cantidad reservada.',
+                    ]);
+                }
+
+                $item->update(['delivered_quantity' => $quantity]);
+            }
+
+            $issueRequest->update([
+                'status' => SupplyIssueRequest::STATUS_READY,
+                'prepared_by_user_id' => $request->user()?->id,
+                'ready_at' => now(),
+                'admin_notes' => $request->input('admin_notes'),
+            ]);
+
+            return $issueRequest->fresh();
+        });
     }
 
     public function close(Request $request, SupplyIssueRequest $issueRequest): SupplyIssueRequest
     {
         if (!in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_PREPARING,
             SupplyIssueRequest::STATUS_READY,
         ], true)) {
-            throw new \Exception('Solo se pueden registrar entregas para solicitudes en alistamiento o listas para recoger.');
+            throw new \Exception('Solo se pueden registrar entregas para solicitudes listas para recoger.');
         }
 
         return DB::transaction(function () use ($request, $issueRequest) {
@@ -138,11 +155,11 @@ class SupplyIssueService
             foreach ($items as $item) {
                 $product = SupplyProduct::query()->lockForUpdate()->findOrFail($item->supply_product_id);
                 $reservedQuantity = (int) $item->reserved_quantity;
-                $quantity = (int) ($request->input("delivered_quantity.{$item->id}") ?? $reservedQuantity);
+                $quantity = (int) $item->delivered_quantity;
 
                 if ($quantity < 0 || $quantity > $reservedQuantity) {
                     throw ValidationException::withMessages([
-                        "delivered_quantity.{$item->id}" => 'La cantidad entregada debe estar entre 0 y la cantidad reservada.',
+                        "delivered_quantity.{$item->id}" => 'La cantidad alistada debe estar entre 0 y la cantidad reservada.',
                     ]);
                 }
 
@@ -204,15 +221,8 @@ class SupplyIssueService
 
     public function reject(Request $request, SupplyIssueRequest $issueRequest): SupplyIssueRequest
     {
-        if ($issueRequest->status === SupplyIssueRequest::STATUS_REJECTED) {
-            throw new \Exception('La solicitud ya fue rechazada.');
-        }
-
-        if (in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_CLOSED,
-            SupplyIssueRequest::STATUS_PENDING_SUPPORT,
-        ], true)) {
-            throw new \Exception('No se puede rechazar una solicitud que ya fue entregada.');
+        if ($issueRequest->status !== SupplyIssueRequest::STATUS_PREPARING) {
+            throw new \Exception('Solo se pueden rechazar solicitudes que aun estan en alistamiento.');
         }
 
         return DB::transaction(function () use ($request, $issueRequest) {
@@ -254,9 +264,86 @@ class SupplyIssueService
         });
     }
 
+    public function deleteRequest(Request $request, SupplyIssueRequest $issueRequest): void
+    {
+        DB::transaction(function () use ($request, $issueRequest) {
+            $issueRequest = SupplyIssueRequest::query()
+                ->lockForUpdate()
+                ->findOrFail($issueRequest->id);
+
+            $items = $issueRequest->items()->lockForUpdate()->get();
+
+            foreach ($items as $item) {
+                $product = SupplyProduct::query()->lockForUpdate()->findOrFail($item->supply_product_id);
+                $reservedQuantity = (int) $item->reserved_quantity;
+                $deliveredQuantity = (int) $item->delivered_quantity;
+
+                if (in_array($issueRequest->status, [
+                    SupplyIssueRequest::STATUS_PREPARING,
+                    SupplyIssueRequest::STATUS_READY,
+                ], true)) {
+                    $product->reserved_stock = max(((int) $product->reserved_stock) - $reservedQuantity, 0);
+                    $product->save();
+
+                    SupplyStockMovement::query()->create([
+                        'supply_product_id' => $product->id,
+                        'user_id' => $request->user()?->id,
+                        'movement_type' => 'delete_issue_request',
+                        'quantity' => -$reservedQuantity,
+                        'stock_on_hand_after' => (int) $product->stock_on_hand,
+                        'reserved_stock_after' => (int) $product->reserved_stock,
+                        'reference_type' => SupplyIssueRequest::class,
+                        'reference_id' => $issueRequest->id,
+                        'notes' => 'Liberacion de reserva por eliminacion de solicitud ' . $issueRequest->request_number,
+                    ]);
+                }
+
+                if (in_array($issueRequest->status, [
+                    SupplyIssueRequest::STATUS_PENDING_SUPPORT,
+                    SupplyIssueRequest::STATUS_CLOSED,
+                ], true) && $deliveredQuantity > 0) {
+                    $product->stock_on_hand = (int) $product->stock_on_hand + $deliveredQuantity;
+                    $product->save();
+
+                    SupplyStockMovement::query()->create([
+                        'supply_product_id' => $product->id,
+                        'user_id' => $request->user()?->id,
+                        'movement_type' => 'restore_deleted_issue_request',
+                        'quantity' => $deliveredQuantity,
+                        'stock_on_hand_after' => (int) $product->stock_on_hand,
+                        'reserved_stock_after' => (int) $product->reserved_stock,
+                        'reference_type' => SupplyIssueRequest::class,
+                        'reference_id' => $issueRequest->id,
+                        'notes' => 'Restitucion de stock por eliminacion de solicitud ' . $issueRequest->request_number,
+                    ]);
+                }
+            }
+
+            DatabaseNotification::query()
+                ->where('type', SupplyIssueNotification::class)
+                ->cursor()
+                ->filter(fn (DatabaseNotification $notification) => (int) ($notification->data['issue_request_id'] ?? 0) === (int) $issueRequest->id)
+                ->each->delete();
+
+            $issueRequest->delete();
+        });
+    }
+
     private function generateIssueNumber(): string
     {
-        $lastNumber = (int) SupplyIssueRequest::max('id');
+        // Request IDs may have gaps after rollbacks or deletions. The document
+        // sequence is based only on previously issued SAL numbers instead.
+        $lastNumber = SupplyIssueRequest::query()
+            ->where('request_number', 'like', 'SAL-%')
+            ->lockForUpdate()
+            ->pluck('request_number')
+            ->map(function (string $requestNumber): int {
+                return preg_match('/^SAL-(\d+)$/', $requestNumber, $matches)
+                    ? (int) $matches[1]
+                    : 0;
+            })
+            ->max() ?? 0;
+
         return 'SAL-' . str_pad((string) ($lastNumber + 1), 6, '0', STR_PAD_LEFT);
     }
 }

@@ -23,6 +23,12 @@
                     <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#createSupplyProductModal">
                         <i class="fas fa-box-open me-1"></i> Nuevo producto
                     </button>
+                    <a class="btn btn-outline-success" href="{{ route('supplies.products.template') }}">
+                        <i class="fas fa-file-download me-1"></i> Plantilla
+                    </a>
+                    <button class="btn btn-outline-danger" type="button" data-bs-toggle="modal" data-bs-target="#importSupplyProductModal">
+                        <i class="fas fa-file-import me-1"></i> Importar catalogo
+                    </button>
                     <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#supplyStockThresholdsModal">
                         <i class="fas fa-sliders-h me-1"></i> Parametrizar existencias
                     </button>
@@ -588,6 +594,40 @@
         </div>
     </div>
 
+    <div class="modal fade supplies-themed-modal" id="importSupplyProductModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Importar catalogo de Proveeduria</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <form method="POST" action="{{ route('supplies.products.import') }}" enctype="multipart/form-data" id="importSupplyProductForm">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="alert alert-info">
+                            <div class="fw-semibold mb-1">Carga inicial controlada</div>
+                            El <strong>STOCK_INICIAL</strong> se suma al stock actual. Si el ID ya existe se actualiza el producto; si no existe, se crea. La importacion se cancela completamente si alguna fila contiene errores.
+                        </div>
+                        <p class="mb-2">Columnas requeridas: <strong>ID_CATALOGO</strong>, <strong>NOMBRE</strong> (solo para productos nuevos) y <strong>STOCK_INICIAL</strong>. Opcional: DESCRIPCION. Los valores de stock minimo, stock medio y estado se administran solo desde Parametrizar existencias.</p>
+                        <a class="btn btn-sm btn-outline-success mb-3" href="{{ route('supplies.products.template') }}">
+                            <i class="fas fa-file-excel me-1"></i> Descargar plantilla de carga
+                        </a>
+                        <input type="file" name="file" id="supplyProductImportFile" class="d-none" accept=".xlsx,.xls,.csv" required>
+                        <label for="supplyProductImportFile" id="supplyProductDropzone" class="border border-2 border-dashed rounded-3 p-4 w-100 text-center cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt fs-2 d-block mb-2"></i>
+                            <span class="fw-semibold d-block">Arrastre el archivo aqui o haga clic para seleccionarlo</span>
+                            <small class="text-muted" id="supplyProductImportFileName">Formatos permitidos: XLSX, XLS y CSV. Maximo 5 MB.</small>
+                        </label>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                        <button class="btn btn-danger" type="submit">Importar catalogo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade supplies-themed-modal" id="supplyStockThresholdsModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -1053,6 +1093,46 @@
                 renderThresholdProducts();
                 renderThresholdSelection();
             });
+
+            const productImportInput = document.getElementById('supplyProductImportFile');
+            const productImportDropzone = document.getElementById('supplyProductDropzone');
+            const productImportFileName = document.getElementById('supplyProductImportFileName');
+
+            const updateProductImportFileName = (file) => {
+                if (productImportFileName) {
+                    productImportFileName.textContent = file
+                        ? `Archivo seleccionado: ${file.name}`
+                        : 'Formatos permitidos: XLSX, XLS y CSV. Maximo 5 MB.';
+                }
+            };
+
+            productImportInput?.addEventListener('change', () => updateProductImportFileName(productImportInput.files[0]));
+
+            if (productImportDropzone && productImportInput) {
+                ['dragenter', 'dragover'].forEach((eventName) => {
+                    productImportDropzone.addEventListener(eventName, (event) => {
+                        event.preventDefault();
+                        productImportDropzone.classList.add('border-danger', 'bg-light');
+                    });
+                });
+
+                ['dragleave', 'drop'].forEach((eventName) => {
+                    productImportDropzone.addEventListener(eventName, (event) => {
+                        event.preventDefault();
+                        productImportDropzone.classList.remove('border-danger', 'bg-light');
+                    });
+                });
+
+                productImportDropzone.addEventListener('drop', (event) => {
+                    const [file] = event.dataTransfer.files;
+                    if (!file) return;
+
+                    const files = new DataTransfer();
+                    files.items.add(file);
+                    productImportInput.files = files.files;
+                    updateProductImportFileName(file);
+                });
+            }
 
             document.querySelectorAll('.edit-client-button').forEach((button) => {
                 button.addEventListener('click', () => {

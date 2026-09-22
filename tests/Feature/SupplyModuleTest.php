@@ -10,9 +10,11 @@ use App\Models\SupplyProduct;
 use App\Models\SupplyPurchaseRecipient;
 use App\Models\SupplyRequest;
 use App\Models\SupplyRequestItem;
+use App\Models\SupplyStockMovement;
 use App\Models\User;
 use App\Services\Supply\SupplyPurchaseNotificationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
@@ -258,6 +260,65 @@ class SupplyModuleTest extends TestCase
         $product->refresh();
         $this->assertSame(8, (int) $product->minimum_stock);
         $this->assertSame(20, (int) $product->medium_stock);
+    }
+
+    public function test_admin_can_download_the_supply_catalog_import_template(): void
+    {
+        Permission::findOrCreate('supplies.admin', 'web');
+        Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin']);
+
+        $user = User::factory()->create();
+        $user->syncRoles(['PROVEEDURIA_ADMIN']);
+
+        $this->actingAs($user)
+            ->get(route('supplies.products.template'))
+            ->assertOk()
+            ->assertHeader('content-disposition');
+    }
+
+    public function test_admin_can_import_supply_catalog_and_add_initial_stock(): void
+    {
+        Permission::findOrCreate('supplies.admin', 'web');
+        Role::findOrCreate('PROVEEDURIA_ADMIN', 'web')->syncPermissions(['supplies.admin']);
+
+        $user = User::factory()->create();
+        $user->syncRoles(['PROVEEDURIA_ADMIN']);
+
+        $existingProduct = SupplyProduct::query()->firstOrFail();
+        $existingProduct->update([
+            'minimum_stock' => 3,
+            'medium_stock' => 8,
+            'is_active' => false,
+        ]);
+        $initialStock = (int) $existingProduct->stock_on_hand;
+        $newCatalogNumber = ((int) SupplyProduct::query()->max('catalog_number')) + 1000;
+        $csv = implode("\n", [
+            'ID_CATALOGO,NOMBRE,DESCRIPCION,STOCK_INICIAL,STOCK_MINIMO,STOCK_MEDIO,ACTIVO',
+            $existingProduct->catalog_number . ',PRODUCTO ACTUALIZADO,Actualizado desde archivo,4,100,200,SI',
+            $newCatalogNumber . ',PRODUCTO CARGADO,Producto creado desde archivo,7',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('supplies.products.import'), [
+                'file' => UploadedFile::fake()->createWithContent('catalogo.csv', $csv),
+            ])
+            ->assertRedirect(route('supplies.index', ['tab' => 'products']));
+
+        $existingProduct->refresh();
+        $this->assertSame($initialStock + 4, (int) $existingProduct->stock_on_hand);
+        $this->assertSame(3, (int) $existingProduct->minimum_stock);
+        $this->assertSame(8, (int) $existingProduct->medium_stock);
+        $this->assertFalse($existingProduct->is_active);
+        $this->assertDatabaseHas('supply_products', [
+            'catalog_number' => $newCatalogNumber,
+            'name' => 'PRODUCTO CARGADO',
+            'stock_on_hand' => 7,
+        ]);
+        $this->assertTrue(SupplyStockMovement::query()
+            ->where('supply_product_id', $existingProduct->id)
+            ->where('movement_type', 'initial_catalog_import')
+            ->where('quantity', 4)
+            ->exists());
     }
 
     public function test_supply_analytics_export_downloads_excel_file(): void

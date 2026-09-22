@@ -83,10 +83,7 @@ class SupplyPolicy
             return false;
         }
 
-        return in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_PREPARING,
-            SupplyIssueRequest::STATUS_READY,
-        ], true);
+        return $issueRequest->status === SupplyIssueRequest::STATUS_READY;
     }
 
     public function confirmSupport(User $user, SupplyIssueRequest $issueRequest): bool
@@ -101,10 +98,12 @@ class SupplyPolicy
             return false;
         }
 
-        return in_array($issueRequest->status, [
-            SupplyIssueRequest::STATUS_PREPARING,
-            SupplyIssueRequest::STATUS_READY,
-        ], true);
+        return $issueRequest->status === SupplyIssueRequest::STATUS_PREPARING;
+    }
+
+    public function deleteIssueRequest(User $user, SupplyIssueRequest $issueRequest): bool
+    {
+        return $user->isSuperAdmin();
     }
 
     public function viewIssuePdf(User $user, SupplyIssueRequest $issueRequest): bool
@@ -117,6 +116,10 @@ class SupplyPolicy
             return false;
         }
 
-        return $issueRequest->status === SupplyIssueRequest::STATUS_CLOSED;
+        return in_array($issueRequest->status, [
+            SupplyIssueRequest::STATUS_READY,
+            SupplyIssueRequest::STATUS_PENDING_SUPPORT,
+            SupplyIssueRequest::STATUS_CLOSED,
+        ], true);
     }
 }

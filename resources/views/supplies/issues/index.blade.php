@@ -190,10 +190,24 @@
                                             <a class="btn btn-sm btn-outline-primary" href="{{ route('supplies.issues.show', $requestRow) }}">
                                                 Abrir
                                             </a>
-                                            @if ($isAdmin || $requestRow->status === \App\Models\SupplyIssueRequest::STATUS_CLOSED)
+                                            @if ($isAdmin || in_array($requestRow->status, [\App\Models\SupplyIssueRequest::STATUS_READY, \App\Models\SupplyIssueRequest::STATUS_PENDING_SUPPORT, \App\Models\SupplyIssueRequest::STATUS_CLOSED], true))
                                                 <a class="btn btn-sm btn-outline-danger" href="{{ route('supplies.issues.pdf', $requestRow) }}">
                                                     PDF
                                                 </a>
+                                            @endif
+                                            @if ($canDeleteIssueRequests)
+                                                <form method="POST" action="{{ route('supplies.issues.destroy', $requestRow) }}" data-swal-confirm>
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        type="submit"
+                                                        data-swal-title="Eliminar solicitud"
+                                                        data-swal-text="Se eliminara {{ $requestRow->request_number }}. Si la solicitud ya tuvo entrega, el stock entregado se restituira. Esta accion no se puede deshacer."
+                                                        data-swal-confirm-text="Eliminar solicitud">
+                                                        Eliminar
+                                                    </button>
+                                                </form>
                                             @endif
                                         </div>
                                     </td>
@@ -347,6 +361,7 @@
             const catalogOptions = @json($catalogProductOptions);
             const clientOptions = @json($catalogClientOptions);
             const lowStockProducts = @json($lowStockProducts);
+            const lowStockAlertSessionKey = @json('supplies.low-stock-alert-shown.' . auth()->id());
             const canViewStock = @json($isAdmin);
             const availabilityUrl = @json(route('supplies.issues.availability'));
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -742,9 +757,25 @@
 
             bindLiveTableFilters();
 
-            if (lowStockProducts.length && typeof bootstrap !== 'undefined') {
+            let shouldShowLowStockAlert = false;
+
+            try {
+                shouldShowLowStockAlert = lowStockProducts.length > 0
+                    && !sessionStorage.getItem(lowStockAlertSessionKey);
+            } catch (error) {
+                // Storage can be disabled by browser privacy policies; keep the alert functional.
+                shouldShowLowStockAlert = lowStockProducts.length > 0;
+            }
+
+            if (shouldShowLowStockAlert && typeof bootstrap !== 'undefined') {
                 const lowStockModalElement = document.getElementById('lowStockAlertModal');
                 if (lowStockModalElement) {
+                    // Avoid interrupting the operator again while navigating or refreshing this session.
+                    try {
+                        sessionStorage.setItem(lowStockAlertSessionKey, '1');
+                    } catch (error) {
+                        // The modal remains available even when session storage is unavailable.
+                    }
                     new bootstrap.Modal(lowStockModalElement).show();
                 }
             }
