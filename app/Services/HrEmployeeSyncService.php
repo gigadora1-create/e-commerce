@@ -38,6 +38,8 @@ class HrEmployeeSyncService
             $employeeId = trim((string) data_get($employee, 'id'));
             $name = trim((string) data_get($employee, 'names'));
             $email = $this->preferredEmail($employee);
+            $phone = $this->preferredPhone($employee);
+            $activeState = $this->activeState($employee);
 
             if ($employeeId === '' || $name === '' || $email === null) {
                 $result['skipped']++;
@@ -71,14 +73,28 @@ class HrEmployeeSyncService
                 'synced_from_hr_at' => now(),
             ];
 
+            if ($this->hasContactField($employee, ['corporate_phone', 'personal_phone'])) {
+                $attributes['telephone'] = $phone ?? '';
+            }
+
+            if (array_key_exists('address', $employee)) {
+                $attributes['address'] = $this->nullableValue(data_get($employee, 'address')) ?? '';
+            }
+
+            // RH did not originally expose a state field. Preserve manual state
+            // until the source explicitly supplies one instead of assuming active.
+            if ($activeState !== null) {
+                $attributes['is_active'] = $activeState;
+            }
+
             if ($user === null) {
                 User::create($attributes + [
-                    'telephone' => '',
-                    'address' => '',
+                    'telephone' => $phone ?? '',
+                    'address' => $this->nullableValue(data_get($employee, 'address')) ?? '',
                     // Legacy field kept for compatibility with existing installations.
                     'user_type' => 'Usuario',
                     'password' => Hash::make(Str::password(40)),
-                    'is_active' => true,
+                    'is_active' => $activeState ?? true,
                 ]);
                 $result['created']++;
                 continue;
@@ -100,6 +116,67 @@ class HrEmployeeSyncService
         }
 
         return Str::lower(trim($email));
+    }
+
+    private function preferredPhone(array $employee): ?string
+    {
+        $phone = data_get($employee, 'corporate_phone') ?: data_get($employee, 'personal_phone');
+
+        return $this->nullableValue($phone);
+    }
+
+    private function hasContactField(array $employee, array $fields): bool
+    {
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $employee)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function activeState(array $employee): ?bool
+    {
+        foreach (['is_active', 'active', 'status', 'estado', 'employment_status', 'state'] as $field) {
+            if (!array_key_exists($field, $employee)) {
+                continue;
+            }
+
+            $value = $employee[$field];
+
+            if (is_bool($value)) {
+                return $value;
+            }
+
+            if (is_int($value) && in_array($value, [0, 1], true)) {
+                return (bool) $value;
+            }
+
+            $normalized = Str::lower(trim(Str::ascii((string) $value)));
+
+            // The RH source uses 1 for active employees and 2 for inactive
+            // employees, even though the API field is named is_active.
+            if (in_array($field, ['is_active', 'state'], true)) {
+                if ($normalized === '1') {
+                    return true;
+                }
+
+                if (in_array($normalized, ['0', '2'], true)) {
+                    return false;
+                }
+            }
+
+            if (in_array($normalized, ['1', 'true', 'activo', 'active', 'habilitado', 'enabled'], true)) {
+                return true;
+            }
+
+            if (in_array($normalized, ['0', 'false', 'inactivo', 'inactive', 'deshabilitado', 'disabled'], true)) {
+                return false;
+            }
+        }
+
+        return null;
     }
 
     private function findExistingUser(string $employeeId, string $email, string $name): array

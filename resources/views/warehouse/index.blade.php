@@ -1218,6 +1218,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const locationBoardCards = Array.from(document.querySelectorAll('[data-location-card-wrapper]'));
     const locationBoardEmptyState = document.getElementById('locationBoardEmptyState');
     const importDropzones = Array.from(document.querySelectorAll('[data-import-dropzone]'));
+    let restoreLocationDetailAfterMove = false;
+
+    if (moveGuideModalElement) {
+        moveGuideModalElement.addEventListener('hidden.bs.modal', () => {
+            if (!restoreLocationDetailAfterMove) {
+                return;
+            }
+
+            restoreLocationDetailAfterMove = false;
+            locationDetailModal?.show();
+        });
+    }
 
     window.warehouseData = warehouseData;
     window.openGuideEntryModal = openGuideEntryModal;
@@ -2236,6 +2248,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 true
             );
 
+            const locationDetailIsOpen = locationDetailModalElement?.classList.contains('show');
+
+            if (locationDetailIsOpen) {
+                restoreLocationDetailAfterMove = true;
+                locationDetailModalElement.addEventListener('hidden.bs.modal', () => {
+                    moveGuideModal.show();
+                }, { once: true });
+                locationDetailModal.hide();
+                return;
+            }
+
             moveGuideModal.show();
         } catch (error) {
             showError(error.message);
@@ -2279,6 +2302,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             showSuccess(data.message || 'Guía actualizada correctamente.');
+            restoreLocationDetailAfterMove = false;
             moveGuideModal.hide();
             window.location.reload();
         } catch (error) {
