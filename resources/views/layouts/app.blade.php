@@ -524,13 +524,58 @@
     }
 
     .dark-mode .swal2-popup {
-      background-color: #1e1e1e;
-      color: #f1f5f9;
+      background-color: #1e1e1e !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #454d55;
     }
 
     .dark-mode .swal2-title,
     .dark-mode .swal2-html-container {
+      color: #f1f5f9 !important;
+    }
+
+    /* SweetAlert controls use native widgets, so they need an explicit dark scheme. */
+    .dark-mode .swal2-input,
+    .dark-mode .swal2-textarea,
+    .dark-mode .swal2-select {
+      background-color: #252b33 !important;
+      color: #f1f5f9 !important;
+      border: 1px solid #56606d !important;
+      color-scheme: dark;
+    }
+
+    .dark-mode .swal2-input::placeholder,
+    .dark-mode .swal2-textarea::placeholder {
+      color: #aeb8c5 !important;
+    }
+
+    .dark-mode .swal2-select option {
+      background-color: #252b33;
       color: #f1f5f9;
+    }
+
+    .dark-mode .swal2-input:focus,
+    .dark-mode .swal2-textarea:focus,
+    .dark-mode .swal2-select:focus {
+      border-color: #e05555 !important;
+      box-shadow: 0 0 0 0.2rem rgba(224, 85, 85, 0.25) !important;
+    }
+
+    .dark-mode .swal2-validation-message {
+      background-color: #421f24 !important;
+      color: #ffd7dc !important;
+    }
+
+    .dark-mode .swal2-cancel {
+      background-color: #59636e !important;
+      color: #ffffff !important;
+    }
+
+    .light-mode .swal2-popup,
+    .light-mode .swal2-input,
+    .light-mode .swal2-textarea,
+    .light-mode .swal2-select {
+      color-scheme: light;
     }
 
     /* Footer en modo oscuro */
