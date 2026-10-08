@@ -69,6 +69,11 @@
                 <button type="button" class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#locationModal" onclick="openLocationModal()">
                     <i class="fas fa-map-marker-alt me-2"></i>Nueva ubicación
                 </button>
+                @if($isSuperAdmin)
+                    <button type="button" class="btn btn-outline-danger btn-lg" onclick="openWarehouseResetDialog()">
+                        <i class="fas fa-trash-alt me-2"></i>Limpiar bodega
+                    </button>
+                @endif
             </div>
 
             <div class="warehouse-context">
@@ -1162,6 +1167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         locations: @json($locationOptions),
         locationCards: @json($locationCards),
         warehouses: @json($warehouseOptions),
+        resettableWarehouses: @json($warehouseResetOptions),
         activeWarehouse: @json($activeWarehouse ?? null),
         permissions: {
             isSuperAdmin: @json($isSuperAdmin),
@@ -1173,6 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
             guideMove: @json(route('warehouse.guides.move')),
             guideExit: @json(route('warehouse.guides.exit')),
             guideExitGrouped: @json(route('warehouse.guides.exit-grouped')),
+            reset: @json(route('warehouse.reset')),
             locationStore: @json(route('warehouse.locations.store')),
             locationBase: @json(url('/warehouse/locations')),
         },
@@ -1245,6 +1252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.clearGuideLookup = clearGuideLookup;
     window.deleteGuide = deleteGuide;
     window.deleteLocation = deleteLocation;
+    window.openWarehouseResetDialog = openWarehouseResetDialog;
 
     const guideEntryWarehouse = document.getElementById('guideEntryWarehouse');
     const guideEntryLocation = document.getElementById('guideEntryLocation');
@@ -1671,6 +1679,99 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function isSuperAdmin() {
         return Boolean(warehouseData.permissions && warehouseData.permissions.isSuperAdmin);
+    }
+
+    async function openWarehouseResetDialog() {
+        if (!isSuperAdmin()) {
+            showError('Acceso denegado. Solo SUPERADMIN puede limpiar una bodega.');
+            return;
+        }
+
+        const warehouses = warehouseData.resettableWarehouses || [];
+        if (!warehouses.length) {
+            showError('No hay bodegas disponibles para limpiar.');
+            return;
+        }
+
+        const options = Object.fromEntries(warehouses.map((scope, index) => [String(index), scope.label]));
+        const selection = await Swal.fire({
+            title: 'Limpiar registros de bodega',
+            html: 'Esta operación elimina guías y movimientos operativos. Las ubicaciones configuradas se conservarán.',
+            icon: 'warning',
+            input: 'select',
+            inputOptions: options,
+            inputPlaceholder: 'Selecciona la bodega a limpiar',
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar',
+            preConfirm: (value) => {
+                if (value === '') {
+                    Swal.showValidationMessage('Debes seleccionar una bodega.');
+                }
+            },
+        });
+
+        if (!selection.isConfirmed) {
+            return;
+        }
+
+        const scope = warehouses[Number(selection.value)];
+        if (!scope) {
+            showError('No fue posible identificar la bodega seleccionada.');
+            return;
+        }
+
+        const confirmation = `BORRAR ${scope.customer} | ${scope.warehouse}`;
+        const approval = await Swal.fire({
+            title: 'Confirmación final requerida',
+            html: `<p class="mb-2">Se eliminarán <strong>${Number(scope.guides_count)} guía(s)</strong> de <strong>${escapeHtml(scope.warehouse)}</strong>.</p><p class="mb-0">Escribe exactamente:</p><code>${escapeHtml(confirmation)}</code>`,
+            icon: 'error',
+            input: 'text',
+            inputPlaceholder: confirmation,
+            showCancelButton: true,
+            confirmButtonText: 'Eliminar registros',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#dc3545',
+            preConfirm: (value) => {
+                if (String(value || '').trim() !== confirmation) {
+                    Swal.showValidationMessage('La frase de confirmación no coincide.');
+                }
+            },
+        });
+
+        if (!approval.isConfirmed) {
+            return;
+        }
+
+        try {
+            const response = await fetch(warehouseData.urls.reset, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    customer: scope.customer,
+                    warehouse: scope.warehouse,
+                    confirmation: String(approval.value || '').trim(),
+                }),
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || data.errors?.confirmation?.[0] || 'No fue posible limpiar la bodega.');
+            }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Bodega limpiada',
+                text: data.message,
+            });
+            window.location.reload();
+        } catch (error) {
+            showError(error.message);
+        }
     }
 
     function resetGuideEntryCaptureState() {

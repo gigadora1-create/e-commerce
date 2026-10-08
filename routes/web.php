@@ -354,6 +354,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/guides/{guide}', [WarehouseController::class, 'destroyGuide'])
             ->name('guides.destroy');
 
+        Route::post('/reset', [WarehouseController::class, 'resetWarehouseRecords'])
+            ->name('reset');
+
         Route::post('/locations', [WarehouseController::class, 'storeLocation'])
             ->middleware('can:warehouse.manage')
             ->name('locations.store');

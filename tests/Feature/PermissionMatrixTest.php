@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\WarehouseGuide;
+use App\Models\WarehouseGuideMovement;
 use App\Models\WarehouseLocation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -62,6 +63,134 @@ class PermissionMatrixTest extends TestCase
 
         $this->get(route('warehouse.index'))->assertOk();
         $this->get(route('roles.index'))->assertOk();
+    }
+
+    public function test_super_admin_can_clear_only_the_selected_warehouse_records(): void
+    {
+        $superAdminRole = Role::findOrCreate('SUPERADMIN', 'web');
+        $user = User::factory()->create();
+        $user->syncRoles([$superAdminRole]);
+
+        $easyGo = Customer::create([
+            'name' => 'Easy Go Cargo Test',
+            'email' => 'easy-go-reset@example.com',
+            'phone' => '3001001001',
+            'address' => 'Calle 100',
+            'is_warehouse_client' => true,
+        ]);
+        $otherCustomer = Customer::create([
+            'name' => 'Otra Bodega Test',
+            'email' => 'other-reset@example.com',
+            'phone' => '3001001002',
+            'address' => 'Calle 101',
+            'is_warehouse_client' => true,
+        ]);
+
+        $easyLocation = WarehouseLocation::create([
+            'code' => 'EASY-01',
+            'customer' => $easyGo->name,
+            'warehouse' => $easyGo->name,
+            'name' => 'Zona Easy Go',
+            'is_active' => true,
+        ]);
+        $otherLocation = WarehouseLocation::create([
+            'code' => 'OTHER-01',
+            'customer' => $otherCustomer->name,
+            'warehouse' => $otherCustomer->name,
+            'name' => 'Zona otra bodega',
+            'is_active' => true,
+        ]);
+        $easyGuide = WarehouseGuide::create([
+            'guide' => 'GL000030001CO',
+            'customer' => $easyGo->name,
+            'warehouse' => $easyGo->name,
+            'status' => WarehouseGuide::STATUS_ACTIVE,
+            'entry_at' => now(),
+            'current_location_id' => $easyLocation->location_id,
+            'current_location_code' => $easyLocation->code,
+            'current_location_name' => $easyLocation->name,
+        ]);
+        $otherGuide = WarehouseGuide::create([
+            'guide' => 'GL000030002CO',
+            'customer' => $otherCustomer->name,
+            'warehouse' => $otherCustomer->name,
+            'status' => WarehouseGuide::STATUS_ACTIVE,
+            'entry_at' => now(),
+            'current_location_id' => $otherLocation->location_id,
+            'current_location_code' => $otherLocation->code,
+            'current_location_name' => $otherLocation->name,
+        ]);
+        $movement = WarehouseGuideMovement::create([
+            'warehouse_guide_id' => $easyGuide->id,
+            'action' => 'ENTRY',
+            'to_location_id' => $easyLocation->location_id,
+            'to_location_code' => $easyLocation->code,
+            'to_location_name' => $easyLocation->name,
+            'performed_by' => $user->id,
+            'performed_at' => now(),
+        ]);
+
+        $this->actingAs($user)->postJson(route('warehouse.reset'), [
+            'customer' => $easyGo->name,
+            'warehouse' => $easyGo->name,
+            'confirmation' => "BORRAR {$easyGo->name} | {$easyGo->name}",
+        ])->assertOk()->assertJsonPath('guides_deleted', 1)->assertJsonPath('movements_deleted', 1);
+
+        $this->assertDatabaseMissing('warehouse_guides', ['id' => $easyGuide->id]);
+        $this->assertDatabaseMissing('warehouse_guide_movements', ['id' => $movement->id]);
+        $this->assertDatabaseHas('warehouse_guides', ['id' => $otherGuide->id]);
+        $this->assertDatabaseHas('warehouse_locations', ['location_id' => $easyLocation->location_id]);
+    }
+
+    public function test_warehouse_reset_rejects_an_incorrect_confirmation_phrase(): void
+    {
+        $superAdminRole = Role::findOrCreate('SUPERADMIN', 'web');
+        $user = User::factory()->create();
+        $user->syncRoles([$superAdminRole]);
+
+        $customer = Customer::create([
+            'name' => 'Bodega Confirmacion Test',
+            'email' => 'confirmation-reset@example.com',
+            'phone' => '3001001003',
+            'address' => 'Calle 102',
+            'is_warehouse_client' => true,
+        ]);
+        $location = WarehouseLocation::create([
+            'code' => 'CONFIRM-01',
+            'customer' => $customer->name,
+            'warehouse' => $customer->name,
+            'name' => 'Zona confirmacion',
+            'is_active' => true,
+        ]);
+        $guide = WarehouseGuide::create([
+            'guide' => 'GL000030003CO',
+            'customer' => $customer->name,
+            'warehouse' => $customer->name,
+            'status' => WarehouseGuide::STATUS_ACTIVE,
+            'entry_at' => now(),
+            'current_location_id' => $location->location_id,
+            'current_location_code' => $location->code,
+            'current_location_name' => $location->name,
+        ]);
+
+        $this->actingAs($user)->postJson(route('warehouse.reset'), [
+            'customer' => $customer->name,
+            'warehouse' => $customer->name,
+            'confirmation' => 'BORRAR OTRA BODEGA',
+        ])->assertUnprocessable()->assertJsonValidationErrors('confirmation');
+
+        $this->assertDatabaseHas('warehouse_guides', ['id' => $guide->id]);
+    }
+
+    public function test_non_super_admin_cannot_clear_warehouse_records(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->postJson(route('warehouse.reset'), [
+            'customer' => 'Easy Go Cargo',
+            'warehouse' => 'Easy Go Cargo',
+            'confirmation' => 'BORRAR Easy Go Cargo | Easy Go Cargo',
+        ])->assertForbidden();
     }
 
     public function test_warehouse_only_user_can_access_warehouse_but_not_admin_views(): void

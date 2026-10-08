@@ -14,8 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class WarehouseController extends Controller
@@ -98,6 +100,9 @@ class WarehouseController extends Controller
         })->values();
 
         $stats = $this->buildStats($activeCustomers, $activeWarehouse);
+        $warehouseResetOptions = $this->isSuperAdmin()
+            ? $this->getWarehouseResetOptions()
+            : [];
 
         return view('warehouse.index', [
             'customer' => $activeWarehouse,
@@ -115,6 +120,7 @@ class WarehouseController extends Controller
             'selectedCustomers' => $selectedCustomers,
             'stats' => $stats,
             'activeWarehouse' => $activeWarehouse,
+            'warehouseResetOptions' => $warehouseResetOptions,
         ]);
     }
 
@@ -291,6 +297,82 @@ class WarehouseController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Ingreso eliminado correctamente.',
+        ]);
+    }
+
+    public function resetWarehouseRecords(Request $request)
+    {
+        if (!$this->isSuperAdmin()) {
+            abort(403, 'Acceso denegado. Solo SUPERADMIN puede limpiar registros de bodega.');
+        }
+
+        $validated = $request->validate([
+            'customer' => ['required', 'string', 'max:100'],
+            'warehouse' => ['required', 'string', 'max:100'],
+            'confirmation' => ['required', 'string', 'max:250'],
+        ]);
+
+        $customer = trim($validated['customer']);
+        $warehouse = trim($validated['warehouse']);
+        $expectedConfirmation = $this->warehouseResetConfirmation($customer, $warehouse);
+
+        if (!hash_equals($expectedConfirmation, trim($validated['confirmation']))) {
+            throw ValidationException::withMessages([
+                'confirmation' => 'Debes escribir exactamente la frase de confirmación indicada.',
+            ]);
+        }
+
+        $hasWarehouseScope = WarehouseGuide::query()
+            ->where('customer', $customer)
+            ->where('warehouse', $warehouse)
+            ->exists()
+            || WarehouseLocation::query()
+                ->where('customer', $customer)
+                ->where('warehouse', $warehouse)
+                ->exists();
+
+        if (!$hasWarehouseScope) {
+            throw ValidationException::withMessages([
+                'warehouse' => 'La bodega seleccionada no existe o ya no está disponible para limpieza.',
+            ]);
+        }
+
+        $result = DB::transaction(function () use ($customer, $warehouse) {
+            $guideIds = WarehouseGuide::query()
+                ->where('customer', $customer)
+                ->where('warehouse', $warehouse)
+                ->lockForUpdate()
+                ->pluck('id');
+
+            $movementsDeleted = $guideIds->isEmpty()
+                ? 0
+                : WarehouseGuideMovement::query()
+                    ->whereIn('warehouse_guide_id', $guideIds)
+                    ->delete();
+
+            $guidesDeleted = $guideIds->isEmpty()
+                ? 0
+                : WarehouseGuide::query()
+                    ->whereIn('id', $guideIds)
+                    ->delete();
+
+            return [
+                'guides_deleted' => $guidesDeleted,
+                'movements_deleted' => $movementsDeleted,
+            ];
+        });
+
+        Log::warning('Warehouse operational records cleared by super admin.', [
+            'user_id' => Auth::id(),
+            'customer' => $customer,
+            'warehouse' => $warehouse,
+            ...$result,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Bodega {$warehouse} limpiada correctamente. Se eliminaron {$result['guides_deleted']} guía(s) y {$result['movements_deleted']} movimiento(s). Las ubicaciones se conservaron.",
+            ...$result,
         ]);
     }
 
@@ -1013,6 +1095,47 @@ class WarehouseController extends Controller
             ->pluck('name')
             ->values()
             ->all() ?: $customers;
+    }
+
+    private function getWarehouseResetOptions(): array
+    {
+        $guideCounts = WarehouseGuide::query()
+            ->select('customer', 'warehouse', DB::raw('COUNT(*) as guides_count'))
+            ->whereNotNull('customer')
+            ->whereNotNull('warehouse')
+            ->groupBy('customer', 'warehouse')
+            ->get()
+            ->keyBy(fn ($row) => $row->customer . "\0" . $row->warehouse);
+
+        return WarehouseLocation::query()
+            ->select('customer', 'warehouse')
+            ->whereNotNull('customer')
+            ->whereNotNull('warehouse')
+            ->distinct()
+            ->get()
+            ->concat($guideCounts->values())
+            ->unique(fn ($row) => $row->customer . "\0" . $row->warehouse)
+            ->map(function ($row) use ($guideCounts) {
+                $customer = trim((string) $row->customer);
+                $warehouse = trim((string) $row->warehouse);
+                $guideCount = (int) ($guideCounts->get($customer . "\0" . $warehouse)->guides_count ?? 0);
+
+                return [
+                    'customer' => $customer,
+                    'warehouse' => $warehouse,
+                    'guides_count' => $guideCount,
+                    'label' => "{$customer} · {$warehouse} ({$guideCount} guía(s))",
+                ];
+            })
+            ->filter(fn (array $scope) => $scope['customer'] !== '' && $scope['warehouse'] !== '')
+            ->sortBy(['customer', 'warehouse'])
+            ->values()
+            ->all();
+    }
+
+    private function warehouseResetConfirmation(string $customer, string $warehouse): string
+    {
+        return "BORRAR {$customer} | {$warehouse}";
     }
 
     private function buildLocationOptions($locations): array
