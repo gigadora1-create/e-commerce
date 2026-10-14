@@ -188,6 +188,14 @@ body.dark-mode .alert-warning {
 body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode .modal-title {
     color: #ffffff !important;
 }
+
+body.dark-mode .card-body,
+body.dark-mode .table-responsive,
+body.dark-mode .dataTables_wrapper,
+body.dark-mode .dataTables_wrapper label,
+body.dark-mode .dataTables_wrapper .dataTables_info {
+    color: #e0e0e0;
+}
 @media (max-width: 768px) {
     .d-flex.flex-wrap {
         flex-direction: column;

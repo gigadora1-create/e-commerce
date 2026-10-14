@@ -670,7 +670,12 @@
 }
 
 .dark-mode .product-name,
-.dark-mode .warehouse-header h4 {
+.dark-mode .warehouse-header h4,
+.dark-mode .location-body,
+.dark-mode .location-body strong,
+.dark-mode .location-body span:not(.badge):not(.stock-indicator),
+.dark-mode .location-card .text-dark,
+.dark-mode .location-card .text-body {
     color: #f1f5f9 !important;
 }
 

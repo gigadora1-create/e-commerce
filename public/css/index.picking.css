@@ -280,6 +280,21 @@ pre {
         font-size: 0.75rem;
     }
 }
+
+/* The global theme supplies the palette; these legacy progress panels need explicit overrides. */
+.dark-mode .progress-container,
+.dark-mode .progress {
+    background-color: #202731;
+    color: #e5edf5;
+}
+
+.dark-mode .progress-header h3,
+.dark-mode .progress-status,
+.dark-mode .progress-details,
+.dark-mode .alert-info h6,
+.dark-mode pre {
+    color: #e5edf5;
+}
 body.loading {
     overflow: hidden;
 }

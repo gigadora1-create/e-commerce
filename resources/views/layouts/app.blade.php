@@ -24,6 +24,7 @@
       const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && prefersDark);
 
       document.documentElement.dataset.themeMode = themeMode;
+      document.documentElement.dataset.bsTheme = isDarkMode ? 'dark' : 'light';
       document.documentElement.classList.toggle('dark-mode', isDarkMode);
       document.documentElement.classList.toggle('light-mode', !isDarkMode);
     })();
@@ -737,6 +738,105 @@
       background-image: none !important;
     }
 
+    /* Bootstrap 5 components use CSS variables, while older views use Bootstrap 4 utilities. */
+    html.dark-mode {
+      color-scheme: dark;
+      --bs-body-color: #e5edf5;
+      --bs-body-color-rgb: 229, 237, 245;
+      --bs-body-bg: #1a1f26;
+      --bs-body-bg-rgb: 26, 31, 38;
+      --bs-emphasis-color: #f8fafc;
+      --bs-emphasis-color-rgb: 248, 250, 252;
+      --bs-secondary-color: rgba(205, 216, 228, 0.78);
+      --bs-secondary-bg: #2a323d;
+      --bs-tertiary-bg: #222a34;
+      --bs-border-color: #4b5868;
+      --bs-link-color: #82b7ff;
+      --bs-link-hover-color: #b5d3ff;
+    }
+
+    .dark-mode .text-dark,
+    .dark-mode .text-body,
+    .dark-mode .text-black,
+    .dark-mode .text-black-50,
+    .dark-mode .text-reset,
+    .dark-mode .text-gray-900,
+    .dark-mode .text-gray-800,
+    .dark-mode .text-gray-700,
+    .dark-mode .text-gray-600 {
+      color: #e5edf5 !important;
+    }
+
+    .dark-mode .text-muted,
+    .dark-mode .text-secondary,
+    .dark-mode .text-gray-500,
+    .dark-mode .text-gray-400,
+    .dark-mode .form-text,
+    .dark-mode .dataTables_info,
+    .dark-mode .dataTables_length,
+    .dark-mode .dataTables_filter,
+    .dark-mode .dataTables_empty {
+      color: #b9c5d3 !important;
+    }
+
+    .dark-mode .list-group,
+    .dark-mode .list-group-item,
+    .dark-mode .dropdown-menu,
+    .dark-mode .dropdown-item,
+    .dark-mode .input-group-text,
+    .dark-mode .accordion-item,
+    .dark-mode .accordion-button,
+    .dark-mode .nav-tabs,
+    .dark-mode .nav-tabs .nav-link,
+    .dark-mode pre {
+      background-color: #202731 !important;
+      color: #e5edf5 !important;
+      border-color: #4b5868 !important;
+    }
+
+    .dark-mode .dropdown-item:hover,
+    .dark-mode .dropdown-item:focus,
+    .dark-mode .list-group-item-action:hover,
+    .dark-mode .list-group-item-action:focus,
+    .dark-mode .accordion-button:not(.collapsed) {
+      background-color: #303b48 !important;
+      color: #ffffff !important;
+    }
+
+    .dark-mode .nav-tabs .nav-link.active,
+    .dark-mode .nav-tabs .nav-item.show .nav-link {
+      background-color: #303b48 !important;
+      color: #ffffff !important;
+      border-color: #4b5868 #4b5868 #303b48 !important;
+    }
+
+    .dark-mode .btn-light,
+    .dark-mode .btn-outline-dark {
+      background-color: #303b48 !important;
+      color: #f8fafc !important;
+      border-color: #657486 !important;
+    }
+
+    .dark-mode .btn-light:hover,
+    .dark-mode .btn-outline-dark:hover {
+      background-color: #3d4a59 !important;
+      color: #ffffff !important;
+      border-color: #8292a6 !important;
+    }
+
+    .dark-mode [style*="color: #212529"],
+    .dark-mode [style*="color:#212529"],
+    .dark-mode [style*="color: #343a40"],
+    .dark-mode [style*="color:#343a40"],
+    .dark-mode [style*="color: #495057"],
+    .dark-mode [style*="color:#495057"],
+    .dark-mode [style*="color: #6c757d"],
+    .dark-mode [style*="color:#6c757d"],
+    .dark-mode [style*="color: black"],
+    .dark-mode [style*="color:black"] {
+      color: #e5edf5 !important;
+    }
+
     @media (max-width: 991.98px) {
       #accordionSidebar {
         display: flex !important;
@@ -1080,6 +1180,7 @@
         const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && prefersDark);
 
         html.dataset.themeMode = themeMode;
+        html.dataset.bsTheme = isDarkMode ? 'dark' : 'light';
         html.classList.toggle('dark-mode', isDarkMode);
         html.classList.toggle('light-mode', !isDarkMode);
         body.classList.toggle('dark-mode', isDarkMode);
