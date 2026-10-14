@@ -116,7 +116,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="location-code" class="form-label">Código *</label>
-                            <input type="text" class="form-control" id="location-code" required maxlength="10">
+                            <input type="text" class="form-control" id="location-code" required maxlength="50">
                         </div>
                         <div class="mb-3">
                             <label for="location-name" class="form-label">Nombre *</label>

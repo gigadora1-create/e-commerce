@@ -20,6 +20,8 @@ use App\Services\InventoryService;
 
 class LocationController extends Controller
 {
+    private const LOCATION_CODE_MAX_LENGTH = 50;
+
     protected $inventoryService;
 
     public function __construct(InventoryService $inventoryService)
@@ -394,7 +396,7 @@ class LocationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'code' => 'required|string|max:10|unique:locations,code',
+            'code' => 'required|string|max:' . self::LOCATION_CODE_MAX_LENGTH . '|unique:locations,code',
             'name' => 'required|string|max:255',
             'warehouse' => 'required|string|max:100',
             'description' => 'nullable|string|max:1000',
@@ -427,7 +429,7 @@ class LocationController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'code' => 'required|string|max:10|unique:locations,code,' . $id . ',location_id',
+            'code' => 'required|string|max:' . self::LOCATION_CODE_MAX_LENGTH . '|unique:locations,code,' . $id . ',location_id',
             'name' => 'required|string|max:255',
             'warehouse' => 'required|string|max:100',
             'description' => 'nullable|string|max:1000',
