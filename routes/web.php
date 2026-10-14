@@ -212,6 +212,9 @@ Route::post('/inventories/store', [InventoryController::class, 'store']);
 Route::post('/cities', [InventoryController::class, 'storeCity'])->name('cities.store');
 Route::get('/inventories', [InventoryController::class, 'index'])->name('inventories.index');
 Route::post('/inventories/reconcile', [InventoryController::class, 'reconcile'])->name('inventories.reconcile');
+Route::post('/inventories/reset-skyone', [InventoryController::class, 'resetSkyoneInventory'])
+    ->middleware(['auth', 'super.admin'])
+    ->name('inventories.reset-skyone');
 Route::put('/inventories/{inventory}', [InventoryController::class, 'update'])->name('inventories.update');
 Route::delete('/inventories/{inventory}', [InventoryController::class, 'destroy'])->name('inventories.destroy');
 Route::post('/customers', [InventoryController::class, 'storeCustomer'])->name('customers.store');

@@ -27,6 +27,11 @@
                     <button class="btn btn-dark" id="reconcileInventoryBtn">
                         <i class="fas fa-sync-alt me-1"></i> Reconciliar Inventario
                     </button>
+                    @if(strtoupper(session('selected_customer', '')) === 'SKYONE')
+                        <button class="btn btn-outline-danger" id="resetSkyoneInventoryBtn">
+                            <i class="fas fa-trash-alt me-1"></i> Limpiar inventario SKYONE
+                        </button>
+                    @endif
                 @endif
             @endif
         </div>
@@ -809,6 +814,77 @@ $(document).ready(function() {
             }
     });
 });
+
+    $('#resetSkyoneInventoryBtn').on('click', async function() {
+        const confirmationPhrase = 'BORRAR INVENTARIO SKYONE';
+        const warning = await Swal.fire({
+            icon: 'warning',
+            title: 'Limpiar inventario de SKYONE',
+            html: '<p>Esta accion elimina existencias, salidas y alistamientos de SKYONE.</p><p>El catalogo y las ubicaciones se conservaran.</p>',
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#b42318',
+        });
+
+        if (!warning.isConfirmed) {
+            return;
+        }
+
+        const confirmation = await Swal.fire({
+            icon: 'warning',
+            title: 'Confirmacion final',
+            html: `Escribe <strong>${confirmationPhrase}</strong> para confirmar el reinicio.`,
+            input: 'text',
+            inputPlaceholder: confirmationPhrase,
+            showCancelButton: true,
+            confirmButtonText: 'Limpiar inventario',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#b42318',
+            inputValidator: (value) => value === confirmationPhrase
+                ? undefined
+                : 'La frase de confirmacion no coincide.',
+        });
+
+        if (!confirmation.isConfirmed) {
+            return;
+        }
+
+        Swal.fire({
+            title: 'Limpiando inventario...',
+            text: 'No cierres esta ventana.',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            didOpen: () => Swal.showLoading(),
+        });
+
+        $.ajax({
+            url: "{{ route('inventories.reset-skyone') }}",
+            type: 'POST',
+            data: {
+                _token: "{{ csrf_token() }}",
+                confirmation: confirmation.value,
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inventario reiniciado',
+                    text: response.message,
+                }).then(() => window.location.reload());
+            },
+            error: function(xhr) {
+                const message = xhr.responseJSON?.errors?.confirmation?.[0]
+                    || xhr.responseJSON?.message
+                    || 'No fue posible limpiar el inventario de SKYONE.';
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No se realizo la limpieza',
+                    text: message,
+                });
+            },
+        });
+    });
 
     // Manejar el envío del formulario de importación
     @if(session('selected_customer'))

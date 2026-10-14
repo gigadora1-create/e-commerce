@@ -26,6 +26,8 @@ use App\Services\StockService;
 
 class InventoryController extends Controller
 {
+    private const RESETTABLE_CUSTOMER = 'SKYONE';
+
     protected $inventoryService;
     protected $stockService;
 
@@ -909,6 +911,112 @@ public function searchItems(Request $request)
         $inventory = Inventory::findOrFail($id);
         $inventory->delete();
         return redirect()->route('inventories.index')->with('success', 'Registro Eliminado Correctamente.');
+    }
+
+    /**
+     * Clears only SKYONE operational inventory data while preserving its catalog and locations.
+     */
+    public function resetSkyoneInventory(Request $request)
+    {
+        if (!auth()->user()?->isSuperAdmin()) {
+            abort(403, 'Acceso denegado. Solo SUPERADMIN puede limpiar el inventario.');
+        }
+
+        $validated = $request->validate([
+            'confirmation' => ['required', 'string', 'max:100'],
+        ]);
+
+        $expectedConfirmation = 'BORRAR INVENTARIO ' . self::RESETTABLE_CUSTOMER;
+        if (!hash_equals($expectedConfirmation, trim($validated['confirmation']))) {
+            throw ValidationException::withMessages([
+                'confirmation' => 'Debes escribir exactamente la frase de confirmacion indicada.',
+            ]);
+        }
+
+        $result = DB::transaction(function () {
+            $inventoryIds = DB::table('inventories')
+                ->whereRaw('UPPER(customer) = ?', [self::RESETTABLE_CUSTOMER])
+                ->lockForUpdate()
+                ->pluck('id');
+
+            $pickingOrderIds = DB::table('picking_orders')
+                ->whereRaw('UPPER(customer) = ?', [self::RESETTABLE_CUSTOMER])
+                ->lockForUpdate()
+                ->pluck('id');
+
+            $pickingDetailsDeleted = DB::table('picking_details')
+                ->where(function ($query) use ($pickingOrderIds, $inventoryIds) {
+                    $query->whereRaw('UPPER(customer) = ?', [self::RESETTABLE_CUSTOMER]);
+
+                    if ($pickingOrderIds->isNotEmpty()) {
+                        $query->orWhereIn('picking_order_id', $pickingOrderIds);
+                    }
+
+                    if ($inventoryIds->isNotEmpty()) {
+                        $query->orWhereIn('inventory_id', $inventoryIds);
+                    }
+                })
+                ->delete();
+
+            $pickingReservationsDeleted = DB::table('picking_reservations')
+                ->where(function ($query) use ($pickingOrderIds, $inventoryIds) {
+                    if ($pickingOrderIds->isNotEmpty()) {
+                        $query->whereIn('picking_order_id', $pickingOrderIds);
+                    }
+
+                    if ($inventoryIds->isNotEmpty()) {
+                        if ($pickingOrderIds->isNotEmpty()) {
+                            $query->orWhereIn('inventory_id', $inventoryIds);
+                        } else {
+                            $query->whereIn('inventory_id', $inventoryIds);
+                        }
+                    }
+                })
+                ->delete();
+
+            $itemLocationsDeleted = $inventoryIds->isEmpty()
+                ? 0
+                : DB::table('item_locations')->whereIn('inventory_id', $inventoryIds)->delete();
+
+            $inventoryOutputsDeleted = DB::table('inventory_outputs')
+                ->where(function ($query) use ($inventoryIds) {
+                    $query->whereRaw('UPPER(customer) = ?', [self::RESETTABLE_CUSTOMER]);
+
+                    if ($inventoryIds->isNotEmpty()) {
+                        $query->orWhereIn('inventory_id', $inventoryIds);
+                    }
+                })
+                ->delete();
+
+            $pickingOrdersDeleted = $pickingOrderIds->isEmpty()
+                ? 0
+                : DB::table('picking_orders')->whereIn('id', $pickingOrderIds)->delete();
+
+            $inventoriesDeleted = $inventoryIds->isEmpty()
+                ? 0
+                : DB::table('inventories')->whereIn('id', $inventoryIds)->delete();
+
+            return [
+                'inventories_deleted' => $inventoriesDeleted,
+                'outputs_deleted' => $inventoryOutputsDeleted,
+                'item_locations_deleted' => $itemLocationsDeleted,
+                'picking_orders_deleted' => $pickingOrdersDeleted,
+                'picking_details_deleted' => $pickingDetailsDeleted,
+                'picking_reservations_deleted' => $pickingReservationsDeleted,
+            ];
+        });
+
+        Log::warning('SKYONE inventory operational records cleared by super admin.', [
+            'user_id' => Auth::id(),
+            'customer' => self::RESETTABLE_CUSTOMER,
+            ...$result,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Inventario de " . self::RESETTABLE_CUSTOMER . " reiniciado correctamente. Se conservaron catalogo, clientes y ubicaciones.",
+            ...$result,
+        ]);
     }
 
     public function storeInventory(Request $request)
