@@ -14,6 +14,7 @@ use App\Models\City;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use App\Helpers\ItemLocationStockHelper;
 use App\Services\InventoryService;
 
@@ -395,8 +396,17 @@ class LocationController extends Controller
 
     public function store(Request $request)
     {
+        $customer = trim((string) ($request->input('customer') ?: session('selected_customer')));
+        $request->merge(['customer' => $customer]);
+
         $request->validate([
-            'code' => 'required|string|max:' . self::LOCATION_CODE_MAX_LENGTH . '|unique:locations,code',
+            'code' => [
+                'required',
+                'string',
+                'max:' . self::LOCATION_CODE_MAX_LENGTH,
+                Rule::unique('locations', 'code')->where('customer', $customer),
+            ],
+            'customer' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'warehouse' => 'required|string|max:100',
             'description' => 'nullable|string|max:1000',
@@ -428,17 +438,23 @@ class LocationController extends Controller
 
     public function update(Request $request, $id)
     {
+        $location = Location::findOrFail($id);
+
         $request->validate([
-            'code' => 'required|string|max:' . self::LOCATION_CODE_MAX_LENGTH . '|unique:locations,code,' . $id . ',location_id',
+            'code' => [
+                'required',
+                'string',
+                'max:' . self::LOCATION_CODE_MAX_LENGTH,
+                Rule::unique('locations', 'code')
+                    ->where('customer', $location->customer)
+                    ->ignore($location->location_id, 'location_id'),
+            ],
             'name' => 'required|string|max:255',
             'warehouse' => 'required|string|max:100',
             'description' => 'nullable|string|max:1000',
         ]);
 
         try {
-            $location = Location::findOrFail($id);
-
-
             if (($location->code === 'ALMACENAMIENTO' || $location->code === 'PENDIENTES') && $request->code !== $location->code) {
                 return response()->json(['error' => 'No se puede cambiar el código de ubicaciones especiales'], 400);
             }
