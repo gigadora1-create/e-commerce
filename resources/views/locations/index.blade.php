@@ -75,8 +75,16 @@
                         </div>
                     </div>
 
+                    <div class="row" id="locations-container">
+                        <div class="col-12 text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Información y controles de paginación -->
-                    <div class="row mb-3">
+                    <div class="row mt-3 pt-3 border-top align-items-center gy-2" id="locations-pagination">
                         <div class="col-md-6">
                             <div id="pagination-info" class="text-muted">
                                 Mostrando 0 de 0 ubicaciones
@@ -84,18 +92,10 @@
                         </div>
                         <div class="col-md-6">
                             <nav aria-label="Paginación de ubicaciones">
-                                <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination-controls">
+                                <ul class="pagination pagination-sm justify-content-md-end justify-content-center mb-0" id="pagination-controls">
                                     <!-- Controles generados dinámicamente -->
                                 </ul>
                             </nav>
-                        </div>
-                    </div>
-
-                    <div class="row" id="locations-container">
-                        <div class="col-12 text-center">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Cargando...</span>
-                            </div>
                         </div>
                     </div>
                 </div>

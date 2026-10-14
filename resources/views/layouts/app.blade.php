@@ -523,6 +523,82 @@
       border-color: #117a8b !important;
     }
 
+    /* Baseline modal treatment for every module and both theme modes. */
+    .modal-content {
+      background-color: #ffffff;
+      color: #212529;
+      border-color: #d0d7de;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+      background-color: #ffffff;
+      color: #212529;
+      border-color: #d0d7de;
+    }
+
+    .modal .form-label,
+    .modal label,
+    .modal .modal-title {
+      color: inherit;
+    }
+
+    .modal .text-muted,
+    .modal small.text-muted {
+      color: #5f6b76 !important;
+    }
+
+    .dark-mode .modal-content {
+      background-color: #1e242c !important;
+      color: #f1f5f9 !important;
+      border-color: #46515e !important;
+    }
+
+    .dark-mode .modal-body,
+    .dark-mode .modal-footer {
+      background-color: #1e242c !important;
+      color: #f1f5f9 !important;
+      border-color: #46515e !important;
+    }
+
+    .dark-mode .modal-header:not(.bg-primary):not(.bg-success):not(.bg-info):not(.bg-danger):not(.bg-warning):not(.bg-dark):not(.bg-secondary) {
+      background-color: #1e242c !important;
+      color: #f1f5f9 !important;
+      border-color: #46515e !important;
+    }
+
+    .dark-mode .modal .form-label,
+    .dark-mode .modal label,
+    .dark-mode .modal .modal-title {
+      color: #f1f5f9 !important;
+    }
+
+    .dark-mode .modal .text-muted,
+    .dark-mode .modal small.text-muted {
+      color: #b6c2cf !important;
+    }
+
+    .dark-mode .modal .form-select option {
+      background-color: #1e242c;
+      color: #f1f5f9;
+    }
+
+    .dark-mode .modal .form-check-input {
+      background-color: #121820;
+      border-color: #8a99aa;
+    }
+
+    .dark-mode .modal .form-check-input:checked {
+      background-color: #dc2626 !important;
+      border-color: #dc2626 !important;
+    }
+
+    .dark-mode .modal .btn-close:not(.btn-close-white) {
+      filter: invert(1) grayscale(1);
+      opacity: 0.85;
+    }
+
     .dark-mode .swal2-popup {
       background-color: #1e1e1e !important;
       color: #f1f5f9 !important;

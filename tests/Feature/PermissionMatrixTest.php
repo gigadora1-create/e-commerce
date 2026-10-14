@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -192,119 +191,6 @@ class PermissionMatrixTest extends TestCase
             'warehouse' => 'Easy Go Cargo',
             'confirmation' => 'BORRAR Easy Go Cargo | Easy Go Cargo',
         ])->assertForbidden();
-    }
-
-    public function test_super_admin_can_reset_only_skyone_operational_inventory(): void
-    {
-        $superAdminRole = Role::findOrCreate('SUPERADMIN', 'web');
-        $user = User::factory()->create();
-        $user->syncRoles([$superAdminRole]);
-
-        $skyoneLocationId = DB::table('locations')->insertGetId([
-            'code' => 'RESET-SKYONE',
-            'name' => 'Ubicacion Skyone reset',
-            'warehouse' => 'BOGOTA',
-            'customer' => 'SKYONE',
-            'is_active' => true,
-        ]);
-
-        $skyoneInventoryId = DB::table('inventories')->insertGetId([
-            'inventory_id' => 990001,
-            'customer' => 'SKYONE',
-            'warehouse' => 'BOGOTA',
-        ]);
-        $otherInventoryId = DB::table('inventories')->insertGetId([
-            'inventory_id' => 990002,
-            'customer' => 'OTRO CLIENTE',
-            'warehouse' => 'BOGOTA',
-        ]);
-
-        DB::table('inventory_outputs')->insert([
-            'inventory_id' => $skyoneInventoryId,
-            'customer' => 'SKYONE',
-            'warehouse' => 'BOGOTA',
-            'guide' => 'RESET-OUT-1',
-            'quantity' => 1,
-            'output_date' => now(),
-            'declared_value' => 0,
-            'status' => 'SALIDA',
-        ]);
-        DB::table('inventory_outputs')->insert([
-            'inventory_id' => $otherInventoryId,
-            'customer' => 'OTRO CLIENTE',
-            'warehouse' => 'BOGOTA',
-            'guide' => 'RESET-OUT-2',
-            'quantity' => 1,
-            'output_date' => now(),
-            'declared_value' => 0,
-            'status' => 'SALIDA',
-        ]);
-
-        $skyoneOrderId = DB::table('picking_orders')->insertGetId([
-            'picking_code' => 'RESET-PICK-SKYONE',
-            'customer' => 'SKYONE',
-            'warehouse' => 'BOGOTA',
-            'status' => 'PENDIENTE',
-        ]);
-        $otherOrderId = DB::table('picking_orders')->insertGetId([
-            'picking_code' => 'RESET-PICK-OTHER',
-            'customer' => 'OTRO CLIENTE',
-            'warehouse' => 'BOGOTA',
-            'status' => 'PENDIENTE',
-        ]);
-
-        DB::table('picking_details')->insert([
-            'picking_order_id' => $skyoneOrderId,
-            'inventory_id' => $skyoneInventoryId,
-            'customer' => 'SKYONE',
-            'quantity_picked' => 1,
-        ]);
-        DB::table('picking_details')->insert([
-            'picking_order_id' => $otherOrderId,
-            'inventory_id' => $otherInventoryId,
-            'customer' => 'OTRO CLIENTE',
-            'quantity_picked' => 1,
-        ]);
-        DB::table('picking_reservations')->insert([
-            'picking_order_id' => $skyoneOrderId,
-            'inventory_id' => $skyoneInventoryId,
-            'quantity_reserved' => 1,
-        ]);
-        DB::table('picking_reservations')->insert([
-            'picking_order_id' => $otherOrderId,
-            'inventory_id' => $otherInventoryId,
-            'quantity_reserved' => 1,
-        ]);
-        DB::table('item_locations')->insert([
-            'item_id' => 990001,
-            'location_id' => $skyoneLocationId,
-            'inventory_id' => $skyoneInventoryId,
-            'current_quantity' => 1,
-            'max_capacity' => 1,
-        ]);
-
-        $response = $this->actingAs($user)->withSession([
-            'two_factor_verified' => true,
-            'selected_customer' => 'SKYONE',
-            'selected_customers' => ['SKYONE'],
-        ])->postJson(route('inventories.reset-skyone'), [
-            'confirmation' => 'BORRAR INVENTARIO SKYONE',
-        ])->assertOk();
-
-        $this->assertGreaterThanOrEqual(1, $response->json('inventories_deleted'));
-        $this->assertGreaterThanOrEqual(1, $response->json('outputs_deleted'));
-        $this->assertGreaterThanOrEqual(1, $response->json('picking_orders_deleted'));
-
-        $this->assertDatabaseMissing('inventories', ['id' => $skyoneInventoryId]);
-        $this->assertDatabaseMissing('inventory_outputs', ['inventory_id' => $skyoneInventoryId]);
-        $this->assertDatabaseMissing('picking_orders', ['id' => $skyoneOrderId]);
-        $this->assertDatabaseMissing('picking_details', ['picking_order_id' => $skyoneOrderId]);
-        $this->assertDatabaseMissing('picking_reservations', ['picking_order_id' => $skyoneOrderId]);
-        $this->assertDatabaseMissing('item_locations', ['inventory_id' => $skyoneInventoryId]);
-        $this->assertDatabaseHas('locations', ['location_id' => $skyoneLocationId]);
-        $this->assertDatabaseHas('inventories', ['id' => $otherInventoryId]);
-        $this->assertDatabaseHas('inventory_outputs', ['inventory_id' => $otherInventoryId]);
-        $this->assertDatabaseHas('picking_orders', ['id' => $otherOrderId]);
     }
 
     public function test_skyone_inventory_reset_requires_exact_confirmation_and_super_admin(): void

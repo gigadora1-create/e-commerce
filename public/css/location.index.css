@@ -635,5 +635,73 @@
     font-size: 0.8rem;
     font-weight: 500;
 }
-    }
-  
+
+}
+
+/* Keep location cards legible when the global dark theme is active. */
+.dark-mode .filter-controls,
+.dark-mode .special-locations-container,
+.dark-mode .storage-alphabet-filter {
+    background-color: #20262e !important;
+    border-color: #46515e !important;
+}
+
+.dark-mode .location-card,
+.dark-mode .product-item,
+.dark-mode .location-capacity-info,
+.dark-mode .empty-location {
+    background-color: #1e242c !important;
+    color: #edf2f7 !important;
+    border-color: #46515e !important;
+}
+
+.dark-mode .location-card.pending,
+.dark-mode .location-card.alert-warning {
+    background: linear-gradient(135deg, #5d4608 0%, #1e242c 100%) !important;
+}
+
+.dark-mode .location-card.alert-danger {
+    background: linear-gradient(135deg, #5d232b 0%, #1e242c 100%) !important;
+}
+
+.dark-mode .product-item:hover {
+    background-color: #2b3440 !important;
+    border-color: #6a7a8d !important;
+}
+
+.dark-mode .product-name,
+.dark-mode .warehouse-header h4 {
+    color: #f1f5f9 !important;
+}
+
+.dark-mode .product-sku,
+.dark-mode .location-capacity-icon,
+.dark-mode .empty-location,
+.dark-mode #pagination-info {
+    color: #b6c2cf !important;
+}
+
+.dark-mode .storage-alphabet-btn {
+    background-color: #1e242c;
+    color: #e5edf5;
+    border-color: #526173;
+}
+
+.dark-mode .storage-alphabet-btn:hover:not(.disabled) {
+    background-color: #2b3440;
+    border-color: #3db5cb;
+}
+
+.dark-mode .storage-active-filter {
+    background-color: #123944;
+    border-color: #3db5cb;
+    color: #e5edf5;
+}
+
+.dark-mode .products-list::-webkit-scrollbar-track {
+    background: #20262e;
+}
+
+.dark-mode .products-list::-webkit-scrollbar-thumb {
+    background: #637184;
+}
