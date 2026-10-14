@@ -703,6 +703,21 @@
     color: #e5edf5;
 }
 
+.dark-mode .capacity-edit {
+    background-color: #3a4654 !important;
+    border: 1px solid #718196;
+    color: #f8fafc !important;
+    font-weight: 600;
+}
+
+.dark-mode .capacity-edit:hover,
+.dark-mode .capacity-edit:focus {
+    background-color: #4b5b6d !important;
+    border-color: #9aacbf;
+    color: #ffffff !important;
+    outline: none;
+}
+
 .dark-mode .products-list::-webkit-scrollbar-track {
     background: #20262e;
 }
