@@ -824,6 +824,39 @@
       border-color: #8292a6 !important;
     }
 
+    /* Preserve semantic contrast for Bootstrap badges and contextual controls. */
+    .dark-mode .badge.bg-light,
+    .dark-mode .badge.text-bg-light {
+      background-color: #3a4654 !important;
+      color: #f8fafc !important;
+      border: 1px solid #718196;
+    }
+
+    .dark-mode .badge.bg-light.text-danger {
+      color: #ff9aa2 !important;
+    }
+
+    .dark-mode .bg-warning.text-dark,
+    .dark-mode .btn-warning.text-dark,
+    .dark-mode .badge.bg-warning.text-dark {
+      color: #1f2937 !important;
+    }
+
+    .dark-mode .btn-outline-primary,
+    .dark-mode .btn-outline-success,
+    .dark-mode .btn-outline-danger,
+    .dark-mode .btn-outline-secondary {
+      background-color: transparent;
+      font-weight: 600;
+    }
+
+    .dark-mode .btn-outline-primary:hover,
+    .dark-mode .btn-outline-success:hover,
+    .dark-mode .btn-outline-danger:hover,
+    .dark-mode .btn-outline-secondary:hover {
+      color: #ffffff !important;
+    }
+
     .dark-mode [style*="color: #212529"],
     .dark-mode [style*="color:#212529"],
     .dark-mode [style*="color: #343a40"],
