@@ -225,7 +225,13 @@ class InventoryImport implements ToCollection, WithHeadingRow
         }
 
         // 2. Calcular stock real y capacidad
-        $currentStock = ItemLocationStockHelper::calculateCurrentStock($itemId, $location->code);
+        $stock = ItemLocationStockHelper::calculateCurrentStock(
+            $itemId,
+            $location->code,
+            $location->warehouse,
+            $location->customer
+        );
+        $currentStock = max(0, (int) $stock['available']);
         $maxCapacity = $itemLocation->max_capacity ?? 1000;
         $availableCapacity = max(0, $maxCapacity - $currentStock);
 
@@ -415,83 +421,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
 
         return $isValid;
     }
-    private function validateLocationSafe($itemId, &$rowData, $rowNumber)
-    {
-        $locationCode = strtoupper(trim($rowData['localizacion']));
-
-        // CASO 1: ALMACENAMIENTO (ubicación especial)
-        if ($locationCode === 'ALMACENAMIENTO') {
-            $location = Location::where('code', 'ALMACENAMIENTO')
-                ->where('customer', $rowData['customer'])
-                ->where('is_active', true)
-                ->first();
-
-            if (!$location) {
-                $this->addError(
-                    $rowNumber,
-                    'Ubicación',
-                    "La ubicación 'ALMACENAMIENTO' no está registrada para el cliente '{$rowData['customer']}'",
-                    "Debe crear la ubicación ALMACENAMIENTO primero"
-                );
-                return false;
-            }
-
-            $rowData['location_id'] = $location->location_id;
-            return true; // No validamos capacidad para ALMACENAMIENTO
-        }
-
-        // CASO 2: UBICACIÓN NORMAL (cualquier otra ubicación)
-        $location = Location::where('code', $locationCode)
-            ->where('warehouse', $rowData['warehouse'])
-            ->where('customer', $rowData['customer'])
-            ->where('is_active', true)
-            ->first();
-
-        if (!$location) {
-            // Obtener ubicaciones disponibles para mostrar en el error
-            $availableLocations = Location::where('warehouse', $rowData['warehouse'])
-                ->where('customer', $rowData['customer'])
-                ->where('is_active', true)
-                ->pluck('code')
-                ->toArray();
-
-            $this->addError(
-                $rowNumber,
-                'Ubicación',
-                "La ubicación '{$rowData['localizacion']}' no existe para bodega '{$rowData['warehouse']}' y cliente '{$rowData['customer']}'",
-                "Ubicaciones disponibles: [" . implode(', ', $availableLocations) . "]"
-            );
-            return false;
-        }
-
-        $rowData['location_id'] = $location->location_id;
-
-        // ✅ CAMBIO CRÍTICO: Ya NO bloqueamos si el producto no está previamente asignado
-        // Solo verificamos capacidad disponible
-
-        // Calcular stock actual y capacidad (Optimizado: Sin vista)
-        // Calculamos stock real usando helper para mantener validación estricta
-        $currentStock = ItemLocationStockHelper::calculateCurrentStock($itemId, $location->code);
-        $maxCapacity = 1000; // Capacidad por defecto
-
-        $availableCapacity = $maxCapacity - $currentStock;
-
-        // Validar capacidad disponible
-        if ($rowData['quantity'] > $availableCapacity) {
-            $this->addError(
-                $rowNumber,
-                'Capacidad',
-                "No hay espacio suficiente en ubicación '{$rowData['localizacion']}'",
-                "Stock actual: {$currentStock}/{$maxCapacity} | Disponible: {$availableCapacity} | Intentando agregar: {$rowData['quantity']}"
-            );
-            return false;
-        }
-
-        return true;
-    }
-
-
-
     private function processAllRows()
     {
         foreach ($this->validatedRows as $rowData) {
@@ -533,8 +462,7 @@ class InventoryImport implements ToCollection, WithHeadingRow
                         ->first();
 
                     if ($itemLocation) {
-                        // ✅ USAR HELPER PARA ACTUALIZAR current_quantity
-                        ItemLocationStockHelper::updateCurrentQuantity(
+                        ItemLocationStockHelper::sync(
                             $rowData['item_id'],
                             $location->location_id
                         );
