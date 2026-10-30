@@ -16,7 +16,6 @@ class ItemLocation extends Model
         'location_id',
         'location_code',
         'inventory_id',
-        'quantity',
         'max_capacity',
         'current_quantity',
         'assigned_at',

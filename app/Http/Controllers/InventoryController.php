@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Artisan;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\InventoryImport;
 use App\Exports\InventoryExport;
+use App\Exports\InventoryEntryTemplateExport;
 use App\Helpers\StringHelper;
 use App\Models\InventoryOutput;
 use Illuminate\Support\Collection;
@@ -1106,6 +1107,14 @@ public function searchItems(Request $request)
         return back()->with('error', $errorMessage);
     }
 }
+
+    public function downloadImportTemplate()
+    {
+        return Excel::download(
+            new InventoryEntryTemplateExport(),
+            'plantilla_ingreso_inventario.xlsx'
+        );
+    }
 
     public function storeCity(Request $request)
 {

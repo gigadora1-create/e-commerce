@@ -438,9 +438,12 @@
                                 <div id="file-name" class="mt-2 text-muted small"></div>
                             </div>
                         </div>
+                        <div class="alert alert-info small mb-0">
+                            <strong>Obligatorios:</strong> SKU, Bodega, Cliente, Cantidad y Ubicación. Lote, fechas, condición y observación son opcionales. El nombre del producto se obtiene automáticamente por el SKU; el archivo no requiere estado, valor, comercio ni tipo.
+                        </div>
                         <div class="d-grid gap-2 mt-3">
-                            <a href="{{ asset('documents/Archivo_Carga_Inventario.xlsx') }}"
-                               class="btn btn-outline-success" download>
+                            <a href="{{ route('inventories.import-template') }}"
+                               class="btn btn-outline-success">
                                 <i class="fas fa-download me-1"></i> Descargar plantilla
                             </a>
                         </div>

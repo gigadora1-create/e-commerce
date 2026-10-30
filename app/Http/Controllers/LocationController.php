@@ -887,7 +887,9 @@ class LocationController extends Controller
             $location = Location::findOrFail($locationId);
 
 
-            $locationItem = $location->items()->where('item_locations.item_id', $itemId)->first();
+            $locationItem = ItemLocation::where('item_id', $itemId)
+                ->where('location_id', $locationId)
+                ->first();
 
             if (!$locationItem) {
                 return response()->json([
@@ -909,7 +911,7 @@ class LocationController extends Controller
             }
 
 
-            $location->items()->detach($itemId);
+            $locationItem->delete();
 
             return response()->json([
                 'success' => 'Producto removido de la ubicación correctamente'

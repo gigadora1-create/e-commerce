@@ -140,7 +140,8 @@ class InventoryImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            $this->validateSkuInWarehouseSafe($rowData['sku'], $rowData['itemDescription'], $rowData['warehouse'], $currentRowNumber);
+            $rowData['item_description'] = $validItem['original_name'];
+            $this->validateSkuInWarehouseSafe($rowData['sku'], $rowData['item_description'], $rowData['warehouse'], $currentRowNumber);
 
             // ✅ VALIDACIÓN CON VISTA OPTIMIZADA
             if (!$this->validateLocationOptimized($validItem['item_id'], $rowData, $currentRowNumber)) {
@@ -148,10 +149,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
             }
 
             if (!$this->validateDatesSafe($rowData, $currentRowNumber)) {
-                continue;
-            }
-
-            if (!$this->validateNumericValues($rowData, $currentRowNumber)) {
                 continue;
             }
 
@@ -252,7 +249,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
     {
         return [
             'sku' => trim($row['sku'] ?? ''),
-            'itemDescription' => trim($row['nombre_del_producto'] ?? $row['descripcion_del_articulo'] ?? ''),
             'warehouse' => trim($row['bodega'] ?? ''),
             'customer' => trim($row['cliente'] ?? ''),
             'quantity' => floatval($row['cantidad'] ?? 0),
@@ -262,9 +258,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
             'expiry_date' => $row['fecha_de_vencimiento'] ?? null,
             'item_condition' => $row['condicion_del_articulo'] ?? '',
             'entry_date' => $row['fecha_de_ingreso'] ?? null,
-            'commerce' => $row['comercio'] ?? '',
-            'value' => $row['valor'] ?? 0,
-            'type' => $row['tipo'] ?? '',
             'observations' => $row['observacion'] ?? null,
         ];
     }
@@ -296,11 +289,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
 
         if (empty($rowData['sku'])) {
             $this->addError($rowNumber, 'SKU', 'El SKU es requerido', '');
-            $isValid = false;
-        }
-
-        if (empty($rowData['itemDescription'])) {
-            $this->addError($rowNumber, 'Descripción', 'La descripción es requerida', '');
             $isValid = false;
         }
 
@@ -504,19 +492,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
 
 
 
-    private function validateNumericValues($rowData, $rowNumber)
-    {
-        if (!is_numeric($rowData['value']) || $rowData['value'] < 0) {
-            $this->addError(
-                $rowNumber,
-                'Valor',
-                "El valor debe ser numérico >= 0"
-            );
-            return false;
-        }
-        return true;
-    }
-
     private function processAllRows()
     {
         foreach ($this->validatedRows as $rowData) {
@@ -534,17 +509,14 @@ class InventoryImport implements ToCollection, WithHeadingRow
                 'warehouse' => $rowData['warehouse'],
                 'localizacion' => $rowData['localizacion'],
                 'location_id' => $rowData['location_id'],
-                'item_description' => $rowData['itemDescription'],
+                'item_description' => $rowData['item_description'],
                 'sku' => $rowData['sku'],
                 'status' => 'INGRESO',
                 'batch' => $rowData['batch'],
                 'expiry_date' => $this->parseDate($rowData['expiry_date']),
                 'item_condition' => $rowData['item_condition'],
                 'entry_date' => $this->parseDate($rowData['entry_date']),
-                'commerce' => $rowData['commerce'],
                 'quantity' => $rowData['quantity'],
-                'value' => $rowData['value'],
-                'type' => $rowData['type'],
                 'customer' => $rowData['customer'],
                 'observations' => $rowData['observations'],
             ]);
@@ -572,7 +544,6 @@ class InventoryImport implements ToCollection, WithHeadingRow
                             'item_id' => $rowData['item_id'],
                             'location_id' => $location->location_id,
                             'inventory_id' => $inventory->id,
-                            'quantity' => $rowData['quantity'],
                             'current_quantity' => $rowData['quantity'],
                             'max_capacity' => 1000,
                             'created_at' => now(),

@@ -245,6 +245,7 @@ Route::post('/inventory-details/assign-documento', [InventoryDetailController::c
 Route::get('inventory-details/get-sku/{description}', [InventoryDetailController::class, 'getSkuByDescription'])->name('inventory-details.get-sku');
 Route::post('/inventories/export', [InventoryController::class, 'export'])->name('inventories.export');
 Route::post('/inventories/import', [InventoryController::class, 'import'])->name('inventories.import');
+Route::get('/inventories/import-template', [InventoryController::class, 'downloadImportTemplate'])->name('inventories.import-template');
 Route::get('/forgot-password', [PasswordResetController::class, 'showForgotForm'])->name('password.request');
 Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink'])->name('password.email');
 Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');

@@ -46,7 +46,7 @@ class Location extends Model
         public function items()
     {
         return $this->belongsToMany(Item::class, 'item_locations', 'location_id', 'item_id')
-                    ->withPivot('inventory_id', 'quantity', 'assigned_at')
+                    ->withPivot('inventory_id', 'current_quantity', 'max_capacity', 'assigned_at')
                     ->withTimestamps();
     }
 
