@@ -43,10 +43,11 @@ class RoleController extends Controller
 
         $validatedData['guard_name'] = 'web';
 
-        Role::create($validatedData);
+        $role = Role::create($validatedData);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        return redirect()->route('roles.index')->with('success', 'Rol agregado exitosamente');
+        return redirect()->route('role_permissions.index', ['role' => $role->id])
+            ->with('success', 'Rol creado. Ahora configura sus permisos operativos.');
     }
 
     public function show($id)

@@ -266,9 +266,10 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('roles', RoleController::class);
         Route::post('profiles/sync-hr', [ProfileController::class, 'syncHr'])->name('profiles.sync-hr');
         Route::resource('profiles', ProfileController::class);
-        Route::resource('admin', AdminController::class);
-        Route::get('/role-permissions', [RolePermissionController::class, 'index'])->name('role_permissions.index');
+        Route::get('/admin/role-permissions', [RolePermissionController::class, 'index'])->name('role_permissions.index');
         Route::post('/role-permissions/{roleId}/assign', [RolePermissionController::class, 'assignPermissions'])->name('role_permissions.assign');
+        Route::redirect('/role-permissions', '/admin/role-permissions');
+        Route::resource('admin', AdminController::class);
     });
 
     // Listado y datos de ubicaciones

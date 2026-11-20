@@ -38,6 +38,7 @@ class Kernel extends HttpKernel
             \App\Http\Middleware\RestrictWarehouseOnlyAccess::class,
             \App\Http\Middleware\RestrictSupplyRequesterOnlyAccess::class,
             \App\Http\Middleware\RequireCustomerSelection::class,
+            \App\Http\Middleware\AuthorizeOperationalPermission::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,

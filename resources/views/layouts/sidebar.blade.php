@@ -54,14 +54,16 @@
             </a>
         </div>
     @else
-        <div class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('dashboard') }}" aria-label="Inicio">
-                <i class="fas fa-fw fa-tachometer-alt"></i>
-                <span>Inicio</span>
-            </a>
-        </div>
+        @can('dashboard.view')
+            <div class="nav-item">
+                <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('dashboard') }}" aria-label="Inicio">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Inicio</span>
+                </a>
+            </div>
+        @endcan
 
-        @if(auth()->check() && !auth()->user()->hasRole('USUARIO_CLIENTE'))
+        @if(auth()->check() && !auth()->user()->hasRole('USUARIO_CLIENTE') && (auth()->user()->isSuperAdmin() || auth()->user()->canAny(['inventories.view', 'inventory.outputs.view', 'items.view', 'cities.view', 'customers.view'])))
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex flex-column align-items-center text-center" href="#"
                     id="ecommerceDropdown" role="button" data-toggle="dropdown" aria-haspopup="true"
@@ -70,24 +72,24 @@
                     <span>E-commerce</span>
                 </a>
                 <div class="dropdown-menu" aria-labelledby="ecommerceDropdown">
-                    <a class="dropdown-item" href="{{ route('inventories.index') }}">
-                        <i class="fas fa-boxes"></i> Ingreso Productos
-                    </a>
-                    <a class="dropdown-item" href="{{ route('inventory-outputs.index') }}">
-                        <i class="fas fa-truck"></i> Salida Productos
-                    </a>
-                    <a class="dropdown-item" href="{{ route('inventories.create') }}">
-                        <i class="fas fa-box-open"></i> Devolucion_Retencion
-                    </a>
-                    <a class="dropdown-item" href="{{ route('items.index') }}">
-                        <i class="fas fa-archive"></i> Productos
-                    </a>
-                    <a class="dropdown-item" href="{{ route('cities.index') }}">
-                        <i class="fas fa-city"></i> Bodegas
-                    </a>
-                    <a class="dropdown-item" href="{{ route('customers.index') }}">
-                        <i class="fas fa-users"></i> Clientes
-                    </a>
+                    @can('inventories.view')
+                        <a class="dropdown-item" href="{{ route('inventories.index') }}"><i class="fas fa-boxes"></i> Ingreso Productos</a>
+                    @endcan
+                    @can('inventory.outputs.view')
+                        <a class="dropdown-item" href="{{ route('inventory-outputs.index') }}"><i class="fas fa-truck"></i> Salida Productos</a>
+                    @endcan
+                    @can('inventories.view')
+                        <a class="dropdown-item" href="{{ route('inventories.create') }}"><i class="fas fa-box-open"></i> Devolucion_Retencion</a>
+                    @endcan
+                    @can('items.view')
+                        <a class="dropdown-item" href="{{ route('items.index') }}"><i class="fas fa-archive"></i> Productos</a>
+                    @endcan
+                    @can('cities.view')
+                        <a class="dropdown-item" href="{{ route('cities.index') }}"><i class="fas fa-city"></i> Bodegas</a>
+                    @endcan
+                    @can('customers.view')
+                        <a class="dropdown-item" href="{{ route('customers.index') }}"><i class="fas fa-users"></i> Clientes</a>
+                    @endcan
                 </div>
             </div>
         @endif
@@ -118,7 +120,7 @@
             </div>
         @endif
 
-        @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('UBICACION')))
+        @if(auth()->check() && (auth()->user()->isSuperAdmin() || auth()->user()->can('locations.view') || auth()->user()->can('UBICACION')))
             <div class="nav-item">
                 <a class="nav-link d-flex flex-column align-items-center text-center"
                     href="{{ route('locations.index') }}" aria-label="Ubicaciones">
@@ -138,23 +140,27 @@
             </div>
         @endif
 
-        <div class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center"
-                href="{{ route('barcode.index') }}" aria-label="Codigos de barras">
-                <i class="fas fa-barcode"></i>
-                <span>Codigos de Barras</span>
-            </a>
-        </div>
+        @can('barcode.view')
+            <div class="nav-item">
+                <a class="nav-link d-flex flex-column align-items-center text-center"
+                    href="{{ route('barcode.index') }}" aria-label="Codigos de barras">
+                    <i class="fas fa-barcode"></i>
+                    <span>Codigos de Barras</span>
+                </a>
+            </div>
+        @endcan
 
-        <div class="nav-item">
-            <a class="nav-link d-flex flex-column align-items-center text-center"
-                href="{{ route('picking.index') }}" aria-label="Picking">
-                <i class="fas fa-dolly"></i>
-                <span>Picking</span>
-            </a>
-        </div>
+        @can('picking.view')
+            <div class="nav-item">
+                <a class="nav-link d-flex flex-column align-items-center text-center"
+                    href="{{ route('picking.index') }}" aria-label="Picking">
+                    <i class="fas fa-dolly"></i>
+                    <span>Picking</span>
+                </a>
+            </div>
+        @endcan
 
-        @can('SUPER_ADMIN')
+        @can('messages.manage')
             <div class="nav-item">
                 <a class="nav-link d-flex flex-column align-items-center text-center" href="{{ route('send.index') }}" aria-label="Mensajeria">
                     <i class="fas fa-sms"></i>
@@ -185,8 +191,8 @@
                         <i class="fas fa-fw fa-sliders-h"></i> Preferencias
                     </a>
                     <a class="dropdown-item icon-tooltip" href="{{ route('role_permissions.index') }}"
-                        data-tooltip="Asignar Permisos a Roles">
-                        <i class="fas fa-fw fa-user-lock"></i> Asignar Permisos
+                        data-tooltip="Matriz de accesos por rol">
+                        <i class="fas fa-fw fa-user-lock"></i> Matriz de accesos
                     </a>
                 </div>
             </div>

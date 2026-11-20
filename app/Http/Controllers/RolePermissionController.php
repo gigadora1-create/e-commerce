@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Customer;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
-use Illuminate\Support\Facades\Log; // Importar el facade Log
 
 class RolePermissionController extends Controller
 {
@@ -16,63 +14,50 @@ class RolePermissionController extends Controller
         $this->middleware(['auth', 'super.admin']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::all();
-        $customerPermissionNames = Customer::query()
-            ->pluck('name')
-            ->filter()
-            ->values()
-            ->all();
+        $catalog = config('role_permissions.permissions', []);
+        $roles = Role::with('permissions')->where('guard_name', 'web')->orderBy('name')->get();
+        $permissions = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', array_keys($catalog))
+            ->get()
+            ->sortBy(fn (Permission $permission) => $catalog[$permission->name]['label'] ?? $permission->name)
+            ->values();
 
-        $permissions = Permission::where('guard_name', 'web')
-            ->when(!empty($customerPermissionNames), function ($query) use ($customerPermissionNames) {
-                $query->whereNotIn('name', $customerPermissionNames);
-            })
-            ->orderBy('name')
-            ->get();
+        $selectedRole = $roles->firstWhere('id', (int) $request->input('role')) ?: $roles->first();
+        $permissionGroups = $permissions->groupBy(
+            fn (Permission $permission) => $catalog[$permission->name]['group'] ?? 'other'
+        );
 
-        if ($permissions->isEmpty()) {
-            return redirect()->back()->with('error', 'No hay permisos disponibles. Por favor, crea algunos permisos primero.');
-        }
-
-        return view('role_permission.index', compact('roles', 'permissions'));
+        return view('role_permission.index', compact('roles', 'permissions', 'selectedRole', 'permissionGroups'));
     }
 
-    public function assignPermissions(Request $request, $roleId)
+    public function assignPermissions(Request $request, int $roleId)
     {
-        // Validar que se hayan enviado permisos
+        $managedPermissionIds = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', array_keys(config('role_permissions.permissions', [])))
+            ->pluck('id')
+            ->all();
+
         $request->validate([
             'permissions' => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
+            'permissions.*' => 'integer|in:' . implode(',', $managedPermissionIds),
         ]);
 
-        // Encontrar el rol
-        $role = Role::findOrFail($roleId);
+        $role = Role::where('guard_name', 'web')->findOrFail($roleId);
+        $selectedPermissions = Permission::whereIn('id', $request->input('permissions', []))->get();
+        $preservedPermissions = $role->permissions()
+            ->whereNotIn('permissions.id', $managedPermissionIds)
+            ->get();
 
-        // Obtener los IDs de los permisos enviados
-        $permissionIds = $request->input('permissions', []);
-
-        // Depurar los IDs recibidos
-        Log::info('Permission IDs received:', $permissionIds);
-
-        // Si no se enviaron permisos, sincronizar con un array vacío
-        if (empty($permissionIds)) {
-            $role->syncPermissions([]);
-        } else {
-            // Buscar los permisos por ID
-            $permissions = Permission::whereIn('id', $permissionIds)->get();
-
-            // Depurar los permisos encontrados
-            Log::info('Permissions found:', $permissions->toArray());
-
-            // Sincronizar los permisos usando las instancias de Permission
-            $role->syncPermissions($permissions);
-        }
+        // Legacy and customer-scope permissions are not managed by this screen.
+        $role->syncPermissions($preservedPermissions->merge($selectedPermissions));
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        return redirect()->route('role_permissions.index')
-            ->with('success', 'Permisos asignados al rol exitosamente');
+        return redirect()->route('role_permissions.index', ['role' => $role->id])
+            ->with('success', 'Permisos actualizados para ' . $role->name . '.');
     }
 }
