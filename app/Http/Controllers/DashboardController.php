@@ -10,6 +10,7 @@ use App\Models\InventoryConsolidated;
 use App\Models\InventoryRetention;
 use App\Models\InventoryDetailed;
 use App\Models\InventoryOutput;
+use App\Services\LegacyWarehousePermissionService;
 
 
 class DashboardController extends Controller
@@ -42,10 +43,7 @@ class DashboardController extends Controller
         $cityPermissions = [];
 
         if (!$isSuperAdmin) {
-            $userPermissions = $user->getAllPermissions()->pluck('name')->toArray();
-            $cityPermissions = array_filter($userPermissions, function($permission) {
-                return !in_array($permission, ['password.create', 'user.management']);
-            });
+            $cityPermissions = app(LegacyWarehousePermissionService::class)->forUser($user);
         }
 
         $last30Days = Carbon::now()->subDays(30);

@@ -23,6 +23,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use App\Services\InventoryService;
 use App\Services\StockService;
+use App\Services\LegacyWarehousePermissionService;
 
 
 class InventoryController extends Controller
@@ -69,10 +70,7 @@ public function index(Request $request)
     })->toArray();
     
 
-    $cityPermissions = array_filter($userPermissions, function($permission) use ($customerNames) {
-        return !in_array($permission, ['password.create', 'user.management']) && 
-               !in_array(strtoupper($permission), $customerNames);
-    });
+    $cityPermissions = app(LegacyWarehousePermissionService::class)->forUser($user);
 
     $customerPermissions = array_filter($userPermissions, function($permission) use ($customerNames) {
         return in_array(strtoupper($permission), $customerNames);
@@ -779,12 +777,8 @@ public function searchItems(Request $request)
 
     try {
         $warehousesQuery = City::query();
-        if (!$user->can('password.create')) {
-            $userCities = $user->getAllPermissions()->pluck('name')
-                ->filter(function ($permission) {
-                    return !in_array($permission, ['password.create', 'user.management']);
-                })
-                ->toArray();
+        if (!$user->isSuperAdmin()) {
+            $userCities = app(LegacyWarehousePermissionService::class)->forUser($user);
 
             if (!empty($userCities)) {
                 $warehousesQuery->whereIn('city_store', $userCities);

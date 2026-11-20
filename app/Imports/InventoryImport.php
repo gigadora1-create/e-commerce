@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\Inventory;
 use App\Models\Item;
+use App\Services\LegacyWarehousePermissionService;
 use App\Models\City;
 use App\Models\Location;
 use App\Models\ItemLocation;
@@ -46,10 +47,7 @@ class InventoryImport implements ToCollection, WithHeadingRow
         // Permisos de bodegas del usuario
         $user = auth()->user();
         if ($user) {
-            $permissions = $user->getAllPermissions()->pluck('name')->toArray();
-            $this->userWarehousePermissions = array_filter($permissions, function ($perm) {
-                return !in_array($perm, ['password.create', 'user.management']);
-            });
+            $this->userWarehousePermissions = app(LegacyWarehousePermissionService::class)->forUser($user);
         }
     }
 

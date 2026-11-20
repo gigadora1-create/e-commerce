@@ -233,19 +233,14 @@ class AuthController extends Controller
             $customerAccess = app(CustomerAccessService::class);
             $allowedCustomers = $customerAccess->availableCustomers($request->user());
 
-            if ($allowedCustomers->count() === 1) {
+            if ($allowedCustomers->count() === 1 && $request->user()->isWarehouseOnly()) {
                 $customerName = (string) $allowedCustomers->first()->name;
                 session([
                     'selected_customers' => [$customerName],
                     'selected_customer' => $customerName,
                 ]);
 
-                if ($request->user() && method_exists($request->user(), 'isWarehouseOnly') && $request->user()->isWarehouseOnly()) {
-                    return redirect()->route('warehouse.index');
-                }
-
-                return app(AuthenticatedRedirectService::class)
-                    ->intendedOr($request, route('dashboard'));
+                return redirect()->route('warehouse.index');
             }
 
             return redirect()->route('customer.context.index');

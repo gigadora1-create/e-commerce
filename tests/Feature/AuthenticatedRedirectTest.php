@@ -53,4 +53,22 @@ class AuthenticatedRedirectTest extends TestCase
             'selected_customers' => [$customer->name],
         ])->get(route('login'))->assertRedirect(route('dashboard'));
     }
+
+    public function test_normal_user_with_one_customer_is_still_asked_to_select_it(): void
+    {
+        $role = Role::findOrCreate('NORMAL_CUSTOMER_SELECTION_TEST', 'web');
+        $customer = Customer::create([
+            'name' => 'Cliente Seleccion Explicita',
+            'email' => 'explicit-selection@example.com',
+            'phone' => '3000000014',
+            'address' => 'Calle 14',
+        ]);
+        $user = User::factory()->create(['two_factor_enabled' => false]);
+        $user->syncRoles([$role]);
+        $user->customerAccesses()->attach($customer->customer_id);
+
+        $this->actingAs($user)->withSession(['two_factor_verified' => true])
+            ->get(route('login'))
+            ->assertRedirect(route('customer.context.index'));
+    }
 }

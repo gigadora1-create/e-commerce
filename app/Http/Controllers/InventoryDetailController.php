@@ -10,6 +10,7 @@ use App\Exports\InventoryExport;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use App\Services\LegacyWarehousePermissionService;
 
 class InventoryDetailController extends Controller
 {
@@ -56,10 +57,7 @@ class InventoryDetailController extends Controller
 
         $detailedInventories = $detailedQuery->get();
 
-        $userPermissions = $user->getAllPermissions()->pluck('name')->toArray();
-        $cityPermissions = array_filter($userPermissions, function($permission) {
-            return !in_array($permission, ['password.create', 'user.management']);
-        });
+        $cityPermissions = app(LegacyWarehousePermissionService::class)->forUser($user);
 
         $uniqueProducts = Item::distinct()->pluck('name');
         $uniqueWarehouses = Inventory::where('customer', $selectedCustomer)->distinct()->pluck('warehouse');
