@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Mail\TwoFactorCode;
 use App\Models\User;
 use App\Services\CustomerAccessService;
+use App\Services\AuthenticatedRedirectService;
 use App\Services\InfobipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -53,8 +54,16 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    public function login()
+    public function login(Request $request)
     {
+        if (Auth::check()) {
+            if ($this->isTwoFactorEnabled() && !session('two_factor_verified')) {
+                return redirect()->route('two-factor.show-code-form');
+            }
+
+            return $this->redirectAfterAuthentication($request);
+        }
+
         return view('auth/login');
     }
 
@@ -235,7 +244,8 @@ class AuthController extends Controller
                     return redirect()->route('warehouse.index');
                 }
 
-                return redirect()->intended(route('dashboard'));
+                return app(AuthenticatedRedirectService::class)
+                    ->intendedOr($request, route('dashboard'));
             }
 
             return redirect()->route('customer.context.index');
@@ -245,6 +255,7 @@ class AuthController extends Controller
             return redirect()->route('warehouse.index');
         }
 
-        return redirect()->intended(route('dashboard'));
+        return app(AuthenticatedRedirectService::class)
+            ->intendedOr($request, route('dashboard'));
     }
 }

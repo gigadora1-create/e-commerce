@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\TwoFactorCode;
 use App\Services\CustomerAccessService;
+use App\Services\AuthenticatedRedirectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -135,7 +136,8 @@ class TwoFactorAuthController extends Controller
                     return redirect()->route('warehouse.index');
                 }
 
-                return redirect()->intended(route('dashboard'));
+                return app(AuthenticatedRedirectService::class)
+                    ->intendedOr($request, route('dashboard'));
             }
 
             return redirect()->route('customer.context.index');
@@ -145,6 +147,7 @@ class TwoFactorAuthController extends Controller
             return redirect()->route('warehouse.index');
         }
 
-        return redirect()->intended(route('dashboard'));
+        return app(AuthenticatedRedirectService::class)
+            ->intendedOr($request, route('dashboard'));
     }
 }

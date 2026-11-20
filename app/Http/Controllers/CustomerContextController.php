@@ -3,13 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Services\CustomerAccessService;
+use App\Services\AuthenticatedRedirectService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class CustomerContextController extends Controller
 {
-    public function __construct(private CustomerAccessService $customerAccess)
+    public function __construct(
+        private CustomerAccessService $customerAccess,
+        private AuthenticatedRedirectService $authenticatedRedirect,
+    )
     {
     }
 
@@ -66,8 +70,8 @@ class CustomerContextController extends Controller
             'selected_customer' => $validated['customers'][0],
         ]);
 
-        return redirect()
-            ->intended(route('dashboard'))
+        return $this->authenticatedRedirect
+            ->intendedOr($request, route('dashboard'))
             ->with('success', 'Clientes seleccionados correctamente.');
     }
 
