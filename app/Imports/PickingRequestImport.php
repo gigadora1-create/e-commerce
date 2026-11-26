@@ -20,6 +20,7 @@ class PickingRequestImport implements ToCollection, WithHeadingRow
     protected $pickingOrder = null;
     protected $inventoryCache = [];
     protected $availabilityCache = [];
+    protected InventoryAvailabilityService $availabilityService;
     protected $allSkusInSystem = [];
     protected $consolidatedErrors = [];
     
@@ -97,16 +98,15 @@ class PickingRequestImport implements ToCollection, WithHeadingRow
     {
         $rowErrors = [];
         $sku = trim($row['sku'] ?? '');
-        $productoExcel = trim($row['producto'] ?? '');
         $cantidad = intval($row['cantidad'] ?? 0);
         $bodega = trim($row['bodega'] ?? '');
         $customer = trim($row['cliente'] ?? $this->defaultCustomer ?? '');
         $orderNumber = isset($row['pedido']) ? trim($row['pedido']) : null;
         $orderNumber = \App\Helpers\StringHelper::repairAccents($orderNumber);
 
-        if (empty($sku) || empty($productoExcel) || empty($bodega) || 
+        if (empty($sku) || empty($bodega) ||
             empty($cantidad) || empty($customer)) {
-            $rowErrors[] = "❌ FALTAN CAMPOS OBLIGATORIOS: SKU, Producto, Cantidad, Bodega o Cliente";
+            $rowErrors[] = "❌ FALTAN CAMPOS OBLIGATORIOS: SKU, Cantidad, Bodega o Cliente";
         }
         
         if ($cantidad <= 0) {
@@ -131,15 +131,7 @@ class PickingRequestImport implements ToCollection, WithHeadingRow
                            "   📋 Combinaciones válidas: {$validCombinations}";
         }
 
-        if ($inventoryMatch && strcasecmp($productoExcel, $inventoryMatch->item_description) !== 0) {
-            $rowErrors[] = "⚠️ NOMBRE DE PRODUCTO INCORRECTO\n" .
-                            "   📦 SKU: '{$sku}'\n" .
-                            "   📝 En Excel: '{$productoExcel}'\n" .
-                            "   ✅ Correcto: '{$inventoryMatch->item_description}'\n" .
-                            "   El nombre NO coincide con el sistema";
-        }
-
-        $nombreProducto = $inventoryMatch ? $inventoryMatch->item_description : $productoExcel;
+        $nombreProducto = $inventoryMatch?->item_description ?? $sku;
         
         $availableInventories = $this->availabilityCache[$cacheKey] ?? collect();
 

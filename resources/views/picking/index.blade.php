@@ -153,7 +153,7 @@
                                 <p class="card-text text-muted">
                                     Descarga la plantilla de Excel con el formato correcto
                                 </p>
-                                <a href="{{ asset('documents/Archivo_Carga_Picking.xlsx') }}"
+                                <a href="{{ route('picking.download-template') }}"
                                     class="btn btn-outline-primary">
                                     Descargar Plantilla Excel
                                 </a>
@@ -177,7 +177,6 @@
                             <h6>Formato requerido:</h6>
                             <ul class="mb-0">
                                 <li><strong>SKU:</strong> Código del producto</li>
-                                <li><strong>Producto:</strong> Nombre del producto</li>
                                 <li><strong>Cantidad:</strong> Cantidad a sacar</li>
                                 <li><strong>Bodega:</strong> Nombre de la bodega</li>
                                 <li><strong>Cliente:</strong> Nombre del cliente</li>

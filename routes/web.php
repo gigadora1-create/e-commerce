@@ -428,6 +428,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('picking')->name('picking.')->group(function () {
         Route::get('/', [PickingController::class, 'index'])->name('index');
+        Route::get('/download-template', [PickingController::class, 'downloadTemplate'])->name('download-template');
         Route::post('/import', [PickingController::class, 'import'])->name('import');
         Route::get('/{id}', [PickingController::class, 'show'])->name('show');
         Route::get('/{id}/export', [PickingController::class, 'exportReport'])->name('export');

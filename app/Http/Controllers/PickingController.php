@@ -9,6 +9,7 @@ use App\Models\Inventory;
 use App\Models\InventoryOutput;
 use App\Imports\PickingRequestImport;
 use App\Exports\PickingReportExport;
+use App\Exports\PickingRequestTemplateExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -112,6 +113,11 @@ class PickingController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new PickingRequestTemplateExport(), 'Archivo_Carga_Picking.xlsx');
     }
 
     public function show($id)
